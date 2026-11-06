@@ -2,7 +2,7 @@
 local G2L = {};
 
 -- StarterGui.CommandPromptGUI
-G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"] = Instance.new("ScreenGui", workspace:WaitForChild("CoreGui"));
 G2L["1"]["Name"] = [[CommandPromptGUI]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 G2L["1"]["ResetOnSpawn"] = false;
@@ -1105,6 +1105,7 @@ local script = G2L["2"];
 		end
 		
 		local Success, AResult = pcall(function()
+			
 			return TeleportService:Teleport(PlaceId, Player)
 		end)
 		
@@ -1210,8 +1211,6 @@ local script = G2L["2"];
 				if Available and NotCurrent and not HasVisited(ID) then
 	
 					table.insert(AllIDs, ID)
-					SaveHistory()
-					QueueReexecute()
 	
 					local TeleportSuccess, ErrorMessage = pcall(function()
 						
@@ -3096,6 +3095,15 @@ local script = G2L["2"];
 				Data.Disconnect(StoredValues)
 			end
 		end
+	end)
+	
+	Player.OnTeleport:Connect(function(State)
+		
+		if State == Enum.TeleportState.Started then
+			SaveScript()
+			QueueReexecute()
+		end
+		
 	end)
 	
 	TweenGUIOpen()
