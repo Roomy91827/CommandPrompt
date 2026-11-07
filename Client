@@ -3365,7 +3365,7 @@ local script = G2L["2"];
 		local VersionAttribute = PossibleDuplicate:GetAttribute("Version")
 	
 		if typeof(VersionAttribute) ~= "number"
-			or VersionAttribute <= CVersion then
+			or VersionAttribute < CVersion then
 	
 			PossibleDuplicate:Destroy()
 			SendOutput({Text = "Command Prompt is already running.", Type = "Error"})
