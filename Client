@@ -3376,7 +3376,7 @@ local script = G2L["2"];
 		local VersionAttribute = PossibleDuplicate:GetAttribute("Version")
 		if not VersionAttribute then continue end
 		if VersionAttribute >= CVersion then
-			CoreGui:Destroy()
+			PossibleDuplicate:Destroy()
 			return
 		end
 	end
