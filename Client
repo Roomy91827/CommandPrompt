@@ -249,7 +249,7 @@ local script = G2L["2"];
 	local Player = Players.LocalPlayer
 	
 	local CommandPromptGUI = script.Parent
-	local CVersion = 1.1
+	local CVersion = 100
 	CommandPromptGUI:SetAttribute("Version", CVersion)
 	
 	local MainFrame = CommandPromptGUI:WaitForChild("MainFrame")
