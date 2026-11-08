@@ -3988,7 +3988,7 @@ local script = G2L["2"];
 		false,
 		Enum.KeyCode.Backquote
 	)
-	
+	task.wait(2)
 	
 	TweenGUIOpen()
 	SendOutput({Text = "Command Prompt V"..CVersion.." - GameName: "..GameName.." - Id: "..placeId})
