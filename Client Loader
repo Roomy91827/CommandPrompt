@@ -528,10 +528,10 @@ local script = G2L["2"];
 	local UserAccountControlGUI = script.Parent
 	local PossibleDuplicate = CoreGui:FindFirstChild("UserAccountControlGUI")
 	if PossibleDuplicate and PossibleDuplicate ~= UserAccountControlGUI then
-	UserAccountControlGUI:Destroy()
+		UserAccountControlGUI:Destroy()
 		return
 	end
-
+	
 	local MainFrame = UserAccountControlGUI:WaitForChild("MainFrame")
 	local BackgroundFrame = UserAccountControlGUI:WaitForChild("BackgroundFrame")
 	local WarningFrame = UserAccountControlGUI:WaitForChild("WarningFrame")
