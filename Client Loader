@@ -1,5 +1,3 @@
--- Created in studio and converted to lua using a converter by uniquadev
-
 -- Instances: 45 | Scripts: 1 | Modules: 0 | Tags: 0
 local G2L = {};
 
@@ -531,11 +529,11 @@ local script = G2L["2"];
 		return
 	end
 	
-	if CoreGui:FindFirstChild("UserAccountControlGUI") then
+	local UserAccountControlGUI = script.Parent
+	local PossibleDuplicate = CoreGui:FindFirstChild("UserAccountControlGUI")
+	if PossibleDuplicate and PossibleDuplicate ~= UserAccountControlGUI then
 		return
 	end
-	
-	local UserAccountControlGUI = script.Parent
 	
 	local MainFrame = UserAccountControlGUI:WaitForChild("MainFrame")
 	local BackgroundFrame = UserAccountControlGUI:WaitForChild("BackgroundFrame")
