@@ -248,7 +248,7 @@ local script = G2L["2"];
 	
 	local CommandPromptGUI = script.Parent
 	local CVersion = 1.3
-	print("A")
+
 	if not RunService:IsStudio() then
 		local PossibleDuplicate = CoreGui:FindFirstChild("CommandPromptGUI")
 		if PossibleDuplicate then
