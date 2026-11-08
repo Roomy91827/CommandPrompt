@@ -13,6 +13,7 @@ A Roblox client-side command console built with Lua. CommandPrompt provides a dr
 - Command help, command details, and repeat-last-command support.
 - Player account information retrieved through public Roblox endpoints.
 - Character movement, camera, and visual utilities.
+- Temporary jump platforms with the `PartJump` command.
 - Rejoin, server hop, and place teleport commands.
 - Optional script loading from a raw URL.
 
@@ -84,6 +85,7 @@ The following command names and aliases are defined in the source.
 | `Noclip` | `clip` | `Toggle` (Boolean) | Disables or restores character-part collisions. |
 | `AntiVoid` | `antivoid`, `novoid` | `Toggle` (Boolean) | Creates an invisible platform above the experience's destroy height. |
 | `PartWalk` | `partwalk`, `walkpart`, `platformwalk`, `float` | `Toggle` (Boolean), `Floored` (Boolean) | Creates a platform that follows beneath your character. |
+| `PartJump` | `pj`, `jumpplatform` | `Toggle` (Boolean) | Spawns a temporary platform underneath your character when you jump. The platform is removed after 0.1 seconds. |
 | `SetWalkspeed` | `speed`, `walkspeed`, `setspeed` | `Value` (Number), `Toggle` (Boolean) | Applies a chosen WalkSpeed value. |
 | `SetJumppower` | `jumppower`, `setjumppower`, `jump` | `Value` (Number), `Toggle` (Boolean) | Applies a chosen JumpPower value. |
 | `SetHipheight` | `hipheight`, `hip`, `sethipheight`, `height` | `Value` (Number), `Toggle` (Boolean) | Applies a chosen HipHeight value. |
@@ -114,6 +116,10 @@ fullbright true
 fullbright false
 esp true
 esp false
+partjump true
+partjump false
+pj true
+pj false
 ```
 
 Player-targeting examples:
