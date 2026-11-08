@@ -264,7 +264,7 @@ local script = G2L["2"];
 				return
 			end
 		end
-	
+	print("A")
 		local Platform = UserInputService:GetPlatform()
 	
 		if Platform == Enum.Platform.IOS or Platform == Enum.Platform.Android then
