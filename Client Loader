@@ -1,3 +1,5 @@
+-- Created in studio and converted to lua using a converter by uniquadev
+
 -- Instances: 45 | Scripts: 1 | Modules: 0 | Tags: 0
 local G2L = {};
 
