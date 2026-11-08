@@ -95,6 +95,7 @@ The following command names and aliases are defined in the source.
 | `RightClickTP` | `rctp`, `clicktp`, `clickteleport`, `rightclickteleport` | `Toggle` (Boolean) | Moves your character to the point selected with right-click. |
 | `VFowardTeleport` | `vft`, `dash`, `fowardteleport`, `ft` | `Distance` (Number), `Toggle` (Boolean) | Enables a forward movement action on the **V** key. |
 | `LoadScript` | `loadstring`, `import` | `Script` (String) | Fetches and executes a script from a raw URL. |
+| `GetPlayerList` | `getplayers`, `players`, `playerlist` | Shows a list of every player in game. |
 
 ## Examples
 
@@ -120,6 +121,7 @@ partjump true
 partjump false
 pj true
 pj false
+playerlist
 ```
 
 Player-targeting examples:
