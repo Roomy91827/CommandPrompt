@@ -253,11 +253,8 @@ local script = G2L["2"];
 	if not RunService:IsStudio() then
 		local PossibleDuplicate = CoreGui:FindFirstChild("CommandPromptGUI")
 		if PossibleDuplicate then
-			if PossibleDuplicate == CommandPromptGUI then
-				return
-			end
 			local VersionAttribute = PossibleDuplicate:GetAttribute("Version")
-			if VersionAttribute then
+			if VersionAttribute and PossibleDuplicate ~= CommandPromptGUI then
 				warn("CommandPrompt is already running version: " .. VersionAttribute)
 				if VersionAttribute > CVersion then
 					CommandPromptGUI:Destroy()
