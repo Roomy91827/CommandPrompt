@@ -3988,6 +3988,8 @@ local script = G2L["2"];
 		false,
 		Enum.KeyCode.Backquote
 	)
+
+    MainFrame.Visible = true
 	task.wait(2)
 	
 	TweenGUIOpen()
