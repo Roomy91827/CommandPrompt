@@ -525,16 +525,13 @@ local script = G2L["2"];
 	local CoreGui = game:WaitForChild("CoreGui")
 	local UserInputService = game:GetService("UserInputService")
 	
-	if CoreGui:FindFirstChild("CommandPromptGUI") then
-		return
-	end
-	
 	local UserAccountControlGUI = script.Parent
 	local PossibleDuplicate = CoreGui:FindFirstChild("UserAccountControlGUI")
 	if PossibleDuplicate and PossibleDuplicate ~= UserAccountControlGUI then
+	UserAccountControlGUI:Destroy()
 		return
 	end
-	
+
 	local MainFrame = UserAccountControlGUI:WaitForChild("MainFrame")
 	local BackgroundFrame = UserAccountControlGUI:WaitForChild("BackgroundFrame")
 	local WarningFrame = UserAccountControlGUI:WaitForChild("WarningFrame")
