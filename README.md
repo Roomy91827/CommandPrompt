@@ -178,4 +178,4 @@ Do not paste unknown URLs into `LoadScript`, run code you have not reviewed, or 
 
 ## Version
 
-The source currently sets the internal version attribute to **1.73**.
+The source currently sets the internal version attribute to **1.74**.
