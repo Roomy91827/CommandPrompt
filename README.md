@@ -158,7 +158,7 @@ Some fields may show as unavailable if an endpoint fails, the information is not
 - **Client-side behavior:** Movement and visual changes are performed locally. Whether they affect gameplay for other players depends on the experience and Roblox networking; this script does not grant server permissions.
 - **Compatibility:** The script uses executor APIs that are not part of the standard Roblox Lua API. Availability and behavior vary by environment.
 - **Studio:** Some commands explicitly reject Studio, and script loading is disabled there. Other executor-dependent operations may also fail.
-- **Desktop only:** Mobile platforms are detected and unsupported.
+- **Mobile support:** Mobile platforms are supported.
 - **Server hopping:** The command stores visited server IDs in `NotSameServers.json` and may fail if requests are restricted or the service is rate-limited.
 - **Persistence and teleport queue:** The script attempts to save a copy as `CommandPrompt.lua` and queue it to run after teleporting. These behaviors require compatible file and queue APIs.
 - **External scripts:** `LoadScript` executes code retrieved from a URL. Only use URLs whose source and contents you have personally reviewed. Remote code can change after you inspect it and can access whatever the execution environment permits.
