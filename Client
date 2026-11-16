@@ -1,4 +1,4 @@
-return function(CommandPrompt)
+return function(CommandPromptGUI)
 
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
