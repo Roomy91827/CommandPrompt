@@ -3118,7 +3118,7 @@ CommandData = {
 				TypeKeys.V = "V"
 				TypeKeys.RightClick = "Right Mouse"
 				TypeKeys.WASD = "WASD + Right Mouse"
-				TypeKeys.Tilde = "`"
+				TypeKeys.Tilde = "F6"
 			end
 
 			if IsPlatformInGroup(Platform, Console) then
