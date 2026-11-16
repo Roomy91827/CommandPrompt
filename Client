@@ -1,6 +1,7 @@
+return function(CommandPrompt)
+
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local CommandPromptGUI = script.Parent
 local MainFrame = CommandPromptGUI:WaitForChild("MainFrame")
 local MobileButtonsFrame = CommandPromptGUI:WaitForChild("MobileButtonsFrame")
 local ReopenButton = MobileButtonsFrame:WaitForChild("ReopenButton")
@@ -4870,3 +4871,4 @@ if (tonumber(LatestVersion) or 0) > tonumber(CVersion) then
 end
 
 InputTextbox.TextEditable = true
+end
