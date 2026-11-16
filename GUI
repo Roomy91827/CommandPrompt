@@ -386,3 +386,5 @@ G2L["21"]["AspectRatio"] = 2.91251;
 G2L["21"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
 
 task.wait(0.01)
+
+return G2L["1"]
