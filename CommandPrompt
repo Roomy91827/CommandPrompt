@@ -17,5 +17,5 @@ end
 
 local GUI = loadstring(game:HttpGet(GUIFile))()
 
-local Client = loadstring(game:HttpGet(ClientFile))(GUI)
+local Client = loadstring(game:HttpGet(ClientFile))()
 Client(GUI)
