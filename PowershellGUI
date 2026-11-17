@@ -1,5 +1,3 @@
-return function()
-
 -- Instances: 32 | Scripts: 0 | Modules: 0 | Tags: 0
 local G2L = {};
 
@@ -353,5 +351,3 @@ G2L["20"]["AspectRatio"] = 2.91251;
 G2L["20"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
 
 return G2L["1"], require;
-end
-
