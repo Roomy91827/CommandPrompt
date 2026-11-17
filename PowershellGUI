@@ -1,10 +1,10 @@
-return function(Parent)
+
 
 -- Instances: 32 | Scripts: 0 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.PowerShell
-G2L["1"] = Instance.new("ScreenGui", Parent);
+G2L["1"] = Instance.new("ScreenGui", game:WaitForChild("CoreGui"));
 G2L["1"]["Name"] = [[PowerShell]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 G2L["1"]["ResetOnSpawn"] = false;
@@ -354,4 +354,4 @@ G2L["20"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
 
 return G2L["1"], require;
 
-end
+
