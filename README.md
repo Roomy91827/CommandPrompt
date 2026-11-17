@@ -306,7 +306,7 @@ Do not paste unknown URLs into `LoadScript`, run unreviewed code, or provide acc
 
 ## Version
 
-The current source version is **1.8**. The `Client` script sets the GUI's `Version` attribute to `1.8`, and checks the repository's `Version` file for a newer published version outside Studio.
+The current source version is **2**. The `Client` script sets the GUI's `Version` attribute to `1.8`, and checks the repository's `Version` file for a newer published version outside Studio.
 
 ## License
 
