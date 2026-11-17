@@ -1,4 +1,4 @@
-
+return function()
 
 -- Instances: 42 | Scripts: 0 | Modules: 0 | Tags: 0
 local G2L = {};
@@ -436,3 +436,4 @@ G2L["2a"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
 
 
 return G2L["1"], require;
+end
