@@ -1,19 +1,5 @@
-local TerminalGUIFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/TerminalGUI"
-local PowershellGUIFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/PowershellGUI"
+local GUIFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/PowershellGUI"
 local ClientFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/Client"
-
-local GUIType = 1
--- Make this variable a two if you want a different UI.
-local GUIFiles = {
-    [1] = TerminalGUIFile,
-    [2] = PowershellGUIFile
-}
-
-local GUIFile = GUIFiles[GUIType]
-
-if not GUIFile then
-    error("Invalid GUI type.")
-end
 
 local GUI = loadstring(game:HttpGet(GUIFile))()
 
