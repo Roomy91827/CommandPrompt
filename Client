@@ -5016,9 +5016,8 @@ CommandData = {
 					Part.Parent = workspace
 				end
 
-				local FixedY = HumanoidRootPart.Position.Y
-				- HumanoidRootPart.Size.Y / 2
-				- 2.5
+				local Offset = HumanoidRootPart.Size.Y / 2 + Part.Size.Y / 2 + 2
+				local FixedY = HumanoidRootPart.Position.Y - Offset
 
 				local Connection = RunService.Heartbeat:Connect(function()
 
@@ -5035,11 +5034,9 @@ CommandData = {
 					local PlatformY
 
 					if Floored then
-						PlatformY = FixedY
+						PlatformY = Position.Y - Offset
 					else
-						PlatformY = HumanoidRootPart.Position.Y 
-						- HumanoidRootPart.Size.Y / 2
-						- 2.5
+						PlatformY = FixedY
 					end
 
 					Part.CFrame = CFrame.new(
