@@ -1223,6 +1223,7 @@ local function SetWalkspeed(Player, Value, Toggle)
 
 	Result.Result = "Success"
 	Result.Message = "Walkspeed set to " .. Value .. "."
+    StoredValues.Active = true
 	return Result
 end
 
