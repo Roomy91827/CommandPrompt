@@ -1,0 +1,661 @@
+-- Instances: 58 | Scripts: 0 | Modules: 0 | Tags: 0
+local G2L = {};
+
+-- StarterGui.PowerShell
+G2L["1"] = Instance.new("ScreenGui", game:WaitForChild("CoreGui"));
+G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.None;
+G2L["1"]["Name"] = [[PowerShell]];
+G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
+
+
+-- StarterGui.PowerShell.MainFrame
+G2L["2"] = Instance.new("Frame", G2L["1"]);
+G2L["2"]["Visible"] = false;
+G2L["2"]["BorderSizePixel"] = 0;
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(13, 13, 13);
+G2L["2"]["Size"] = UDim2.new(0.6, 0, 0.6, 0);
+G2L["2"]["Position"] = UDim2.new(0.07786, 0, 0.15135, 0);
+G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2"]["Name"] = [[MainFrame]];
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame
+G2L["3"] = Instance.new("Frame", G2L["2"]);
+G2L["3"]["BorderSizePixel"] = 0;
+G2L["3"]["BackgroundColor3"] = Color3.fromRGB(47, 47, 47);
+G2L["3"]["Size"] = UDim2.new(1, 0, 0.1, 0);
+G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3"]["Name"] = [[TabFrame]];
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.UICorner
+G2L["4"] = Instance.new("UICorner", G2L["3"]);
+G2L["4"]["CornerRadius"] = UDim.new(0, 5);
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.TItleLabel
+G2L["5"] = Instance.new("TextLabel", G2L["3"]);
+G2L["5"]["TextWrapped"] = true;
+G2L["5"]["BorderSizePixel"] = 0;
+G2L["5"]["TextSize"] = 14;
+G2L["5"]["TextScaled"] = true;
+G2L["5"]["BackgroundColor3"] = Color3.fromRGB(10, 10, 10);
+G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["5"]["TextColor3"] = Color3.fromRGB(80, 171, 255);
+G2L["5"]["BackgroundTransparency"] = 1;
+G2L["5"]["AnchorPoint"] = Vector2.new(0, 0.5);
+G2L["5"]["Size"] = UDim2.new(0.3, 0, 1, 0);
+G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["Text"] = [[Windows Powershell]];
+G2L["5"]["Name"] = [[TItleLabel]];
+G2L["5"]["Position"] = UDim2.new(0, 0, 0.5, 0);
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.ButtonsFrame
+G2L["6"] = Instance.new("Frame", G2L["3"]);
+G2L["6"]["BorderSizePixel"] = 0;
+G2L["6"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["AnchorPoint"] = Vector2.new(1, 0.5);
+G2L["6"]["Size"] = UDim2.new(0.7, 0, 1, 0);
+G2L["6"]["Position"] = UDim2.new(1, 0, 0.5, 0);
+G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["Name"] = [[ButtonsFrame]];
+G2L["6"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.ButtonsFrame.FullScreenButton
+G2L["7"] = Instance.new("TextButton", G2L["6"]);
+G2L["7"]["TextWrapped"] = true;
+G2L["7"]["BorderSizePixel"] = 0;
+G2L["7"]["TextSize"] = 14;
+G2L["7"]["TextScaled"] = true;
+G2L["7"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["7"]["BackgroundTransparency"] = 1;
+G2L["7"]["Size"] = UDim2.new(0.1, 0, 1, 0);
+G2L["7"]["LayoutOrder"] = 1;
+G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Text"] = [[O]];
+G2L["7"]["Name"] = [[FullScreenButton]];
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.ButtonsFrame.UIListLayout
+G2L["8"] = Instance.new("UIListLayout", G2L["6"]);
+G2L["8"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Right;
+G2L["8"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["8"]["FillDirection"] = Enum.FillDirection.Horizontal;
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.ButtonsFrame.CloseButton
+G2L["9"] = Instance.new("TextButton", G2L["6"]);
+G2L["9"]["TextWrapped"] = true;
+G2L["9"]["BorderSizePixel"] = 0;
+G2L["9"]["TextSize"] = 14;
+G2L["9"]["TextScaled"] = true;
+G2L["9"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["9"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["9"]["BackgroundTransparency"] = 1;
+G2L["9"]["Size"] = UDim2.new(0.1, 0, 1, 0);
+G2L["9"]["LayoutOrder"] = 2;
+G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9"]["Text"] = [[X]];
+G2L["9"]["Name"] = [[CloseButton]];
+
+
+-- StarterGui.PowerShell.MainFrame.TabFrame.ButtonsFrame.HideButton
+G2L["a"] = Instance.new("TextButton", G2L["6"]);
+G2L["a"]["TextWrapped"] = true;
+G2L["a"]["BorderSizePixel"] = 0;
+G2L["a"]["TextSize"] = 14;
+G2L["a"]["TextScaled"] = true;
+G2L["a"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["a"]["BackgroundTransparency"] = 1;
+G2L["a"]["Size"] = UDim2.new(0.1, 0, 1, 0);
+G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["Text"] = [[-]];
+G2L["a"]["Name"] = [[HideButton]];
+
+
+-- StarterGui.PowerShell.MainFrame.UICorner
+G2L["b"] = Instance.new("UICorner", G2L["2"]);
+G2L["b"]["CornerRadius"] = UDim.new(0, 5);
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame
+G2L["c"] = Instance.new("ScrollingFrame", G2L["2"]);
+G2L["c"]["Active"] = true;
+G2L["c"]["BorderSizePixel"] = 0;
+G2L["c"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
+G2L["c"]["Name"] = [[FeedScrollingFrame]];
+G2L["c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["c"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
+G2L["c"]["Size"] = UDim2.new(1, 0, 0.8, 0);
+G2L["c"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["c"]["LayoutOrder"] = 1;
+G2L["c"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame
+G2L["d"] = Instance.new("Frame", G2L["c"]);
+G2L["d"]["BorderSizePixel"] = 0;
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["d"]["Size"] = UDim2.new(1, 0, 0.1, 0);
+G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["d"]["Name"] = [[CommandFrame]];
+G2L["d"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.InputTextbox
+G2L["e"] = Instance.new("TextBox", G2L["d"]);
+G2L["e"]["Name"] = [[InputTextbox]];
+G2L["e"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["e"]["PlaceholderColor3"] = Color3.fromRGB(128, 128, 128);
+G2L["e"]["BorderSizePixel"] = 0;
+G2L["e"]["TextEditable"] = false;
+G2L["e"]["TextWrapped"] = true;
+G2L["e"]["TextSize"] = 14;
+G2L["e"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["e"]["TextScaled"] = true;
+G2L["e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["e"]["AnchorPoint"] = Vector2.new(1, 0.5);
+G2L["e"]["ClearTextOnFocus"] = false;
+G2L["e"]["Size"] = UDim2.new(0.8, 0, 1, 0);
+G2L["e"]["Position"] = UDim2.new(1, 0, 0.5, 0);
+G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["Text"] = [[]];
+G2L["e"]["LayoutOrder"] = 1;
+G2L["e"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.ReferenceLabel
+G2L["f"] = Instance.new("TextBox", G2L["d"]);
+G2L["f"]["Name"] = [[ReferenceLabel]];
+G2L["f"]["BorderSizePixel"] = 0;
+G2L["f"]["TextEditable"] = false;
+G2L["f"]["TextWrapped"] = true;
+G2L["f"]["TextSize"] = 14;
+G2L["f"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["f"]["TextScaled"] = true;
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["f"]["AnchorPoint"] = Vector2.new(0, 0.5);
+G2L["f"]["Size"] = UDim2.new(0.2, 0, 1, 0);
+G2L["f"]["Position"] = UDim2.new(0, 0, 0.5, 0);
+G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["f"]["Text"] = [[game.Players.Roemoy: ]];
+G2L["f"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame
+G2L["10"] = Instance.new("ScrollingFrame", G2L["d"]);
+G2L["10"]["Visible"] = false;
+G2L["10"]["Active"] = true;
+G2L["10"]["ScrollingDirection"] = Enum.ScrollingDirection.X;
+G2L["10"]["BorderSizePixel"] = 0;
+G2L["10"]["Name"] = [[DropdownsFrame]];
+G2L["10"]["ScrollBarImageTransparency"] = 1;
+G2L["10"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["AnchorPoint"] = Vector2.new(1, 0.5);
+G2L["10"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
+G2L["10"]["Size"] = UDim2.new(0.8, 0, 1, 0);
+G2L["10"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["Position"] = UDim2.new(1, 0, 0.5, 0);
+G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["ScrollBarThickness"] = 0;
+G2L["10"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.SendButton
+G2L["11"] = Instance.new("TextButton", G2L["10"]);
+G2L["11"]["TextWrapped"] = true;
+G2L["11"]["BorderSizePixel"] = 0;
+G2L["11"]["TextSize"] = 14;
+G2L["11"]["TextScaled"] = true;
+G2L["11"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["11"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["11"]["BackgroundTransparency"] = 1;
+G2L["11"]["Size"] = UDim2.new(0.1, 0, 1, 0);
+G2L["11"]["LayoutOrder"] = 10;
+G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["11"]["Text"] = [[>]];
+G2L["11"]["Name"] = [[SendButton]];
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.SendButton.UICorner
+G2L["12"] = Instance.new("UICorner", G2L["11"]);
+
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.UIListLayout
+G2L["13"] = Instance.new("UIListLayout", G2L["10"]);
+G2L["13"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["13"]["FillDirection"] = Enum.FillDirection.Horizontal;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.ParamButtonTemplate
+G2L["14"] = Instance.new("TextButton", G2L["10"]);
+G2L["14"]["TextWrapped"] = true;
+G2L["14"]["BorderSizePixel"] = 0;
+G2L["14"]["TextSize"] = 14;
+G2L["14"]["TextScaled"] = true;
+G2L["14"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["14"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["14"]["BackgroundTransparency"] = 1;
+G2L["14"]["Size"] = UDim2.new(0.15, 0, 1, 0);
+G2L["14"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14"]["Text"] = [[Param]];
+G2L["14"]["Name"] = [[ParamButtonTemplate]];
+G2L["14"]["Visible"] = false;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.ParamButtonTemplate.ScrollingFrame
+G2L["15"] = Instance.new("ScrollingFrame", G2L["14"]);
+G2L["15"]["Visible"] = false;
+G2L["15"]["Active"] = true;
+G2L["15"]["BorderSizePixel"] = 0;
+G2L["15"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
+G2L["15"]["ScrollBarImageTransparency"] = 1;
+G2L["15"]["BackgroundColor3"] = Color3.fromRGB(47, 47, 47);
+G2L["15"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["15"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY;
+G2L["15"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["15"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["15"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["15"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["15"]["ScrollBarThickness"] = 0;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.ParamButtonTemplate.ScrollingFrame.UIListLayout
+G2L["16"] = Instance.new("UIListLayout", G2L["15"]);
+G2L["16"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.ParamButtonTemplate.ScrollingFrame.OptionButton
+G2L["17"] = Instance.new("TextButton", G2L["15"]);
+G2L["17"]["TextWrapped"] = true;
+G2L["17"]["BorderSizePixel"] = 0;
+G2L["17"]["TextSize"] = 14;
+G2L["17"]["TextScaled"] = true;
+G2L["17"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["17"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["17"]["BackgroundTransparency"] = 1;
+G2L["17"]["Size"] = UDim2.new(1, 0, 0.75, 0);
+G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["Name"] = [[OptionButton]];
+G2L["17"]["Visible"] = false;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.CommandFrame.DropdownsFrame.ParamButtonTemplate.TextBox
+G2L["18"] = Instance.new("TextBox", G2L["14"]);
+G2L["18"]["Visible"] = false;
+G2L["18"]["PlaceholderColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["18"]["BorderSizePixel"] = 0;
+G2L["18"]["TextWrapped"] = true;
+G2L["18"]["TextSize"] = 14;
+G2L["18"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["18"]["TextScaled"] = true;
+G2L["18"]["BackgroundColor3"] = Color3.fromRGB(5, 5, 5);
+G2L["18"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["18"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["18"]["ClearTextOnFocus"] = false;
+G2L["18"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["18"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["18"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.UIListLayout
+G2L["19"] = Instance.new("UIListLayout", G2L["c"]);
+G2L["19"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.PowerShell.MainFrame.FeedScrollingFrame.MessageTemplate
+G2L["1a"] = Instance.new("TextBox", G2L["c"]);
+G2L["1a"]["Visible"] = false;
+G2L["1a"]["Name"] = [[MessageTemplate]];
+G2L["1a"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["1a"]["PlaceholderColor3"] = Color3.fromRGB(128, 128, 128);
+G2L["1a"]["BorderSizePixel"] = 0;
+G2L["1a"]["TextEditable"] = false;
+G2L["1a"]["TextWrapped"] = true;
+G2L["1a"]["TextSize"] = 14;
+G2L["1a"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["1a"]["TextScaled"] = true;
+G2L["1a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["1a"]["Size"] = UDim2.new(1, 0, 0.1, 0);
+G2L["1a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1a"]["Text"] = [[Hi, this is an error that is currently fucking you]];
+G2L["1a"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MainFrame.UIListLayout
+G2L["1b"] = Instance.new("UIListLayout", G2L["2"]);
+G2L["1b"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.PowerShell.MainFrame.TogglesFrame
+G2L["1c"] = Instance.new("Frame", G2L["2"]);
+G2L["1c"]["BorderSizePixel"] = 0;
+G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(47, 47, 47);
+G2L["1c"]["Size"] = UDim2.new(1, 0, 0.1, 0);
+G2L["1c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1c"]["Name"] = [[TogglesFrame]];
+G2L["1c"]["LayoutOrder"] = 2;
+
+
+-- StarterGui.PowerShell.MainFrame.TogglesFrame.UICorner
+G2L["1d"] = Instance.new("UICorner", G2L["1c"]);
+G2L["1d"]["CornerRadius"] = UDim.new(0, 5);
+
+
+-- StarterGui.PowerShell.MainFrame.TogglesFrame.UIListLayout
+G2L["1e"] = Instance.new("UIListLayout", G2L["1c"]);
+G2L["1e"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
+G2L["1e"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["1e"]["FillDirection"] = Enum.FillDirection.Horizontal;
+
+
+-- StarterGui.PowerShell.MainFrame.TogglesFrame.SettingsButton
+G2L["1f"] = Instance.new("TextButton", G2L["1c"]);
+G2L["1f"]["TextWrapped"] = true;
+G2L["1f"]["BorderSizePixel"] = 0;
+G2L["1f"]["TextSize"] = 14;
+G2L["1f"]["TextScaled"] = true;
+G2L["1f"]["TextColor3"] = Color3.fromRGB(80, 171, 255);
+G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["1f"]["BackgroundTransparency"] = 1;
+G2L["1f"]["Size"] = UDim2.new(0.2, 0, 1, 0);
+G2L["1f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1f"]["Text"] = [[SETTINGS]];
+G2L["1f"]["Name"] = [[SettingsButton]];
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame
+G2L["20"] = Instance.new("Frame", G2L["1"]);
+G2L["20"]["BorderSizePixel"] = 0;
+G2L["20"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["20"]["AnchorPoint"] = Vector2.new(1, 0.3);
+G2L["20"]["Size"] = UDim2.new(0.1, 0, 0.2, 0);
+G2L["20"]["Position"] = UDim2.new(1, 0, 0.3, 0);
+G2L["20"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["20"]["Name"] = [[MobileButtonsFrame]];
+G2L["20"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.ReopenButton
+G2L["21"] = Instance.new("TextButton", G2L["20"]);
+G2L["21"]["TextWrapped"] = true;
+G2L["21"]["BorderSizePixel"] = 0;
+G2L["21"]["TextSize"] = 14;
+G2L["21"]["TextScaled"] = true;
+G2L["21"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["21"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["21"]["AnchorPoint"] = Vector2.new(0.9, 0.3);
+G2L["21"]["BackgroundTransparency"] = 0.5;
+G2L["21"]["Size"] = UDim2.new(1, 0, 0.3, 0);
+G2L["21"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["21"]["Text"] = [[ALT]];
+G2L["21"]["Name"] = [[ReopenButton]];
+G2L["21"]["Visible"] = false;
+G2L["21"]["Position"] = UDim2.new(0.9, 0, 0.3, 0);
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.ReopenButton.UICorner
+G2L["22"] = Instance.new("UICorner", G2L["21"]);
+
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.ReopenButton.UIStroke
+G2L["23"] = Instance.new("UIStroke", G2L["21"]);
+G2L["23"]["Color"] = Color3.fromRGB(12, 244, 217);
+G2L["23"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.ReopenButton.UIAspectRatioConstraint
+G2L["24"] = Instance.new("UIAspectRatioConstraint", G2L["21"]);
+G2L["24"]["AspectRatio"] = 2.98819;
+G2L["24"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.VTeleportButton
+G2L["25"] = Instance.new("TextButton", G2L["20"]);
+G2L["25"]["TextWrapped"] = true;
+G2L["25"]["BorderSizePixel"] = 0;
+G2L["25"]["TextSize"] = 14;
+G2L["25"]["TextScaled"] = true;
+G2L["25"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["25"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["25"]["AnchorPoint"] = Vector2.new(0.9, 0.4);
+G2L["25"]["BackgroundTransparency"] = 0.5;
+G2L["25"]["Size"] = UDim2.new(1, 0, 0.3, 0);
+G2L["25"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["25"]["Text"] = [[V]];
+G2L["25"]["Name"] = [[VTeleportButton]];
+G2L["25"]["Visible"] = false;
+G2L["25"]["Position"] = UDim2.new(0.9, 0, 0.4, 0);
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.VTeleportButton.UICorner
+G2L["26"] = Instance.new("UICorner", G2L["25"]);
+
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.VTeleportButton.UIStroke
+G2L["27"] = Instance.new("UIStroke", G2L["25"]);
+G2L["27"]["Color"] = Color3.fromRGB(12, 244, 217);
+G2L["27"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.VTeleportButton.UIAspectRatioConstraint
+G2L["28"] = Instance.new("UIAspectRatioConstraint", G2L["25"]);
+G2L["28"]["AspectRatio"] = 2.91251;
+G2L["28"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.UIListLayout
+G2L["29"] = Instance.new("UIListLayout", G2L["20"]);
+G2L["29"]["Padding"] = UDim.new(0, 10);
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.RCTPButton
+G2L["2a"] = Instance.new("TextButton", G2L["20"]);
+G2L["2a"]["TextWrapped"] = true;
+G2L["2a"]["BorderSizePixel"] = 0;
+G2L["2a"]["TextSize"] = 14;
+G2L["2a"]["TextScaled"] = true;
+G2L["2a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["2a"]["AnchorPoint"] = Vector2.new(0.9, 0.4);
+G2L["2a"]["BackgroundTransparency"] = 0.5;
+G2L["2a"]["Size"] = UDim2.new(1, 0, 0.3, 0);
+G2L["2a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2a"]["Text"] = [[RC]];
+G2L["2a"]["Name"] = [[RCTPButton]];
+G2L["2a"]["Visible"] = false;
+G2L["2a"]["Position"] = UDim2.new(0.9, 0, 0.4, 0);
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.RCTPButton.UICorner
+G2L["2b"] = Instance.new("UICorner", G2L["2a"]);
+
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.RCTPButton.UIStroke
+G2L["2c"] = Instance.new("UIStroke", G2L["2a"]);
+G2L["2c"]["Color"] = Color3.fromRGB(12, 244, 217);
+G2L["2c"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+
+-- StarterGui.PowerShell.MobileButtonsFrame.RCTPButton.UIAspectRatioConstraint
+G2L["2d"] = Instance.new("UIAspectRatioConstraint", G2L["2a"]);
+G2L["2d"]["AspectRatio"] = 2.91251;
+G2L["2d"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
+
+
+-- StarterGui.PowerShell.SettingsFrame
+G2L["2e"] = Instance.new("Frame", G2L["1"]);
+G2L["2e"]["Visible"] = false;
+G2L["2e"]["BorderSizePixel"] = 0;
+G2L["2e"]["BackgroundColor3"] = Color3.fromRGB(47, 47, 47);
+G2L["2e"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["2e"]["Size"] = UDim2.new(0.3, 0, 0.5, 0);
+G2L["2e"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["2e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2e"]["Name"] = [[SettingsFrame]];
+
+
+-- StarterGui.PowerShell.SettingsFrame.UIAspectRatioConstraint
+G2L["2f"] = Instance.new("UIAspectRatioConstraint", G2L["2e"]);
+G2L["2f"]["AspectRatio"] = 1.028;
+G2L["2f"]["AspectType"] = Enum.AspectType.ScaleWithParentSize;
+
+
+-- StarterGui.PowerShell.SettingsFrame.UICorner
+G2L["30"] = Instance.new("UICorner", G2L["2e"]);
+G2L["30"]["CornerRadius"] = UDim.new(0, 5);
+
+
+-- StarterGui.PowerShell.SettingsFrame.UIListLayout
+G2L["31"] = Instance.new("UIListLayout", G2L["2e"]);
+G2L["31"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.PowerShell.SettingsFrame.BuilderModeFrame
+G2L["32"] = Instance.new("Frame", G2L["2e"]);
+G2L["32"]["BorderSizePixel"] = 0;
+G2L["32"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["32"]["Size"] = UDim2.new(1, 0, 0.3, 0);
+G2L["32"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["32"]["Name"] = [[BuilderModeFrame]];
+G2L["32"]["LayoutOrder"] = 1;
+G2L["32"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.SettingsFrame.BuilderModeFrame.DescriptionLabel
+G2L["33"] = Instance.new("TextLabel", G2L["32"]);
+G2L["33"]["TextWrapped"] = true;
+G2L["33"]["BorderSizePixel"] = 0;
+G2L["33"]["TextSize"] = 14;
+G2L["33"]["TextScaled"] = true;
+G2L["33"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["33"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["33"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["33"]["BackgroundTransparency"] = 1;
+G2L["33"]["AnchorPoint"] = Vector2.new(0.5, 1);
+G2L["33"]["Size"] = UDim2.new(1, 0, 0.6, 0);
+G2L["33"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["33"]["Text"] = [[Allows you to build commands by selecting argument values instead of typing them manually.]];
+G2L["33"]["Name"] = [[DescriptionLabel]];
+G2L["33"]["Position"] = UDim2.new(0.5, 0, 1, 0);
+
+
+-- StarterGui.PowerShell.SettingsFrame.BuilderModeFrame.ToggleFrame
+G2L["34"] = Instance.new("Frame", G2L["32"]);
+G2L["34"]["BorderSizePixel"] = 0;
+G2L["34"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["34"]["AnchorPoint"] = Vector2.new(0.5, 0);
+G2L["34"]["Size"] = UDim2.new(1, 0, 0.4, 0);
+G2L["34"]["Position"] = UDim2.new(0.5, 0, 0, 0);
+G2L["34"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["34"]["Name"] = [[ToggleFrame]];
+G2L["34"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.SettingsFrame.BuilderModeFrame.ToggleFrame.NameLabel
+G2L["35"] = Instance.new("TextLabel", G2L["34"]);
+G2L["35"]["TextWrapped"] = true;
+G2L["35"]["BorderSizePixel"] = 0;
+G2L["35"]["TextSize"] = 14;
+G2L["35"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["35"]["TextScaled"] = true;
+G2L["35"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["35"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["35"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["35"]["BackgroundTransparency"] = 1;
+G2L["35"]["AnchorPoint"] = Vector2.new(0, 0.5);
+G2L["35"]["Size"] = UDim2.new(0.6, 0, 1, 0);
+G2L["35"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["35"]["Text"] = [[Builder Mode: ]];
+G2L["35"]["Name"] = [[NameLabel]];
+G2L["35"]["Position"] = UDim2.new(0, 0, 0.5, 0);
+
+
+-- StarterGui.PowerShell.SettingsFrame.BuilderModeFrame.ToggleFrame.ToggleButton
+G2L["36"] = Instance.new("TextButton", G2L["34"]);
+G2L["36"]["TextWrapped"] = true;
+G2L["36"]["BorderSizePixel"] = 0;
+G2L["36"]["TextSize"] = 14;
+G2L["36"]["TextScaled"] = true;
+G2L["36"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["36"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["36"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["36"]["AnchorPoint"] = Vector2.new(1, 0.5);
+G2L["36"]["BackgroundTransparency"] = 1;
+G2L["36"]["Size"] = UDim2.new(0.4, 0, 1, 0);
+G2L["36"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["36"]["Text"] = [[Off]];
+G2L["36"]["Name"] = [[ToggleButton]];
+G2L["36"]["Position"] = UDim2.new(1, 0, 0.5, 0);
+
+
+-- StarterGui.PowerShell.SettingsFrame.Padding
+G2L["37"] = Instance.new("Frame", G2L["2e"]);
+G2L["37"]["BorderSizePixel"] = 0;
+G2L["37"]["BackgroundColor3"] = Color3.fromRGB(148, 148, 148);
+G2L["37"]["Size"] = UDim2.new(1, 0, 0.01, 0);
+G2L["37"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["37"]["Name"] = [[Padding]];
+G2L["37"]["LayoutOrder"] = 2;
+
+
+-- StarterGui.PowerShell.SettingsFrame.TitleFrame
+G2L["38"] = Instance.new("Frame", G2L["2e"]);
+G2L["38"]["BorderSizePixel"] = 0;
+G2L["38"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["38"]["Size"] = UDim2.new(1, 0, 0.2, 0);
+G2L["38"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["38"]["Name"] = [[TitleFrame]];
+G2L["38"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.PowerShell.SettingsFrame.TitleFrame.CloseButton
+G2L["39"] = Instance.new("TextButton", G2L["38"]);
+G2L["39"]["TextWrapped"] = true;
+G2L["39"]["BorderSizePixel"] = 0;
+G2L["39"]["TextSize"] = 14;
+G2L["39"]["TextScaled"] = true;
+G2L["39"]["TextColor3"] = Color3.fromRGB(205, 205, 205);
+G2L["39"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["39"]["FontFace"] = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+G2L["39"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["39"]["BackgroundTransparency"] = 1;
+G2L["39"]["Size"] = UDim2.new(0.75, 0, 0.5, 0);
+G2L["39"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["39"]["Text"] = [[Close]];
+G2L["39"]["Name"] = [[CloseButton]];
+G2L["39"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+
+-- StarterGui.PowerShell.SettingsFrame.TitleFrame.CloseButton.UICorner
+G2L["3a"] = Instance.new("UICorner", G2L["39"]);
+
+
+
+
+return G2L["1"], require;
