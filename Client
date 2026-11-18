@@ -1032,31 +1032,27 @@ local function Noclip(Player, Toggle)
 
 	local NData = CommandData.Noclip.Data
 	local StoredValues = NData.StoredValues
-	
-	if not StoredValues.Active then
+
+	if Toggle == false and not StoredValues.Active then
 		Result.Result = "Failed"
 		Result.Message = "Noclip isn't active."
 		return Result
 	end
-	
+
 	for _, Part in ipairs(Character:GetDescendants()) do
 		if HasCanCollide(Part) then
 
-			if Toggle == true then
+			if Toggle then
 
 				if Part:GetAttribute("DefaultCanCollide") == nil then
-					Part:SetAttribute(
-						"DefaultCanCollide",
-						Part.CanCollide
-					)
+					Part:SetAttribute("DefaultCanCollide", Part.CanCollide)
 				end
 
 				Part.CanCollide = false
 
 			else
 
-				local DefaultValue =
-					Part:GetAttribute("DefaultCanCollide")
+				local DefaultValue = Part:GetAttribute("DefaultCanCollide")
 
 				if DefaultValue ~= nil then
 					Part.CanCollide = DefaultValue
@@ -1067,17 +1063,11 @@ local function Noclip(Player, Toggle)
 		end
 	end
 
-	Result.Result = "Success"
+	StoredValues.Enabled = Toggle
+	StoredValues.Active = Toggle
 
-	if Toggle then
-		StoredValues.Enabled = true
-		Result.Message = "Noclip enabled."
-		StoredValues.Active = true
-	else
-		StoredValues.Enabled = false
-		Result.Message = "Noclip disabled."
-		StoredValues.Active = false
-	end
+	Result.Result = "Success"
+	Result.Message = Toggle and "Noclip enabled." or "Noclip disabled."
 
 	return Result
 
