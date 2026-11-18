@@ -5767,5 +5767,16 @@ end
 
 InputTextbox.TextEditable = true
 
+Player.CharacterAdded:Connect(function()
+
+	for _, Command in pairs(CommandData) do
+		local CleanupOnDeath = Command.CleanupOnDeath
+
+		if CleanupOnDeath then
+			Command.Data.Disconnect()
+		end
+	end
+
+end)
 
 end
