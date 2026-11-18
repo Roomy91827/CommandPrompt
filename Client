@@ -154,7 +154,7 @@ local UserService = game:GetService("UserService")
 local CoreGui = game:WaitForChild("CoreGui", 5)
 local VirtualUser = game:GetService("VirtualUser")
 
-local CVersion = 2.1
+local CVersion = 2.2
 local CExecutor = "Unknown Executor/Client Script"
 local Platform = "Unknown"
 local LatestVersion = "Unknown"
