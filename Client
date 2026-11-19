@@ -873,6 +873,13 @@ CloseButton.MouseButton1Click:Connect(function()
 			Data.Disconnect(StoredValues)
 		end
 	end
+
+	if ExecutionType == "Executor" then
+		if isfile(FileName) then
+			delfile(FileName)
+		end
+	end
+
 end)
 
 FullScreenButton.MouseButton1Click:Connect(function()
