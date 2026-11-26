@@ -143,13 +143,6 @@ function SendOutput(MessageData)
 	
 end
 
-if not game:IsLoaded() then
-	game.Loaded:Wait()
-end
-
-RunService.RenderStepped:Wait()
-RunService.RenderStepped:Wait()
-
 TweenGUIOpen()
 
 local Players = game:GetService("Players")
