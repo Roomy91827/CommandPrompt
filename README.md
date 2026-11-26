@@ -2,7 +2,7 @@
 
 A Roblox command-line-style GUI with a collection of player, character, camera, and utility commands.
 
-**Current version:** 2.4  
+**Current version:** 2.5
 **Author:** Roomy  
 **License:** MIT
 
@@ -143,7 +143,7 @@ This project does not guarantee that client-side character changes will be accep
 
 ## Version
 
-The current repository version is **2.4**, as recorded in `Version` and the client script.
+The current repository version is **2.5**, as recorded in `Version` and the client script.
 
 ## License
 
