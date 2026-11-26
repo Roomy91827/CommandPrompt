@@ -25,7 +25,7 @@ A Roblox command-line-style GUI with a collection of player, character, camera, 
 | `CommandPrompt` | Entry-point loader. Downloads and initializes the GUI and client code. |
 | `PowershellGUI` | Creates the CommandPrompt interface and its UI elements. |
 | `Client` | Contains the command framework, command definitions, and behavior. |
-| `Version` | Contains the current release version (`2.4`). |
+| `Version` | Contains the current release version (`2.5`). |
 | `LICENSE` | MIT License. |
 
 ## Installation and execution
