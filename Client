@@ -1,0 +1,6393 @@
+return function(CommandPromptGUI)
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local MainFrame = CommandPromptGUI:WaitForChild("MainFrame")
+local MobileButtonsFrame = CommandPromptGUI:WaitForChild("MobileButtonsFrame")
+local ReopenButton = MobileButtonsFrame:WaitForChild("ReopenButton")
+local FeedScrollingFrame = MainFrame:WaitForChild("FeedScrollingFrame")
+local MessageTemplate = FeedScrollingFrame:WaitForChild("MessageTemplate")
+local CommandFrame = FeedScrollingFrame:WaitForChild("CommandFrame")
+local InputTextbox = CommandFrame:WaitForChild("InputTextbox")
+local Logs = 0
+
+local function FocusCommandPrompt()
+
+	InputTextbox:CaptureFocus()
+
+	task.defer(function()
+		FeedScrollingFrame.CanvasPosition = Vector2.new(
+			0,
+			math.max(
+				0,
+				FeedScrollingFrame.AbsoluteCanvasSize.Y
+				- FeedScrollingFrame.AbsoluteSize.Y
+			)
+		)
+	end)
+
+end
+
+local function TweenGUIOpen()
+
+	MainFrame.Visible = true
+
+	local TweenInfo1 = TweenInfo.new(
+		0.6,
+		Enum.EasingStyle.Quint,
+		Enum.EasingDirection.Out
+	)
+
+	local Tween = TweenService:Create(MainFrame, TweenInfo1, {
+		Size = UDim2.new(0.6, 0, 0.6, 0)
+	})
+
+	Tween:Play()
+
+	if ReopenButton.Visible then
+		ReopenButton.Visible = false
+	end
+	
+	FocusCommandPrompt()
+
+end
+
+local function CheckDuplication(Parent, CVersion)
+	
+	for _, InstanceA in ipairs(Parent:GetChildren()) do
+		if InstanceA.Name == "PowerShell"
+			and InstanceA ~= CommandPromptGUI then
+
+			local VersionAttribute = InstanceA:GetAttribute("Version")
+
+			if typeof(VersionAttribute) == "number"
+				and VersionAttribute >= CVersion then
+				
+				CommandPromptGUI:Destroy()
+
+				warn("New version "..VersionAttribute.." of CommandPrompt is already running.")
+
+				return true
+			else
+				InstanceA:Destroy()
+
+				warn("Old version "..tostring(VersionAttribute).." of CommandPrompt was removed.")
+			end
+		end
+	end
+
+	return false
+end
+
+local function GetExecutionType()
+	if RunService:IsStudio() then
+		return "Studio"
+	end
+
+	if type(identifyexecutor) == "function"
+		or type(getgenv) == "function"
+		or type(writefile) == "function"
+		or type(readfile) == "function" then
+		return "Executor"
+	end
+
+	return "LocalScript"
+end
+
+function SendOutput(MessageData)
+
+	local MessageType = MessageData.Type or "Info"
+	local MessageText = tostring(MessageData.Text or "")
+
+	Logs += 1
+
+	local NewMessageFrame = MessageTemplate:Clone()
+	NewMessageFrame.Name = "Message" .. Logs
+	NewMessageFrame.LayoutOrder = Logs
+	NewMessageFrame.Visible = true
+	NewMessageFrame.Parent = FeedScrollingFrame
+
+	NewMessageFrame.Text = MessageText
+
+	if MessageType == "Error" then
+		NewMessageFrame.TextColor3 = Color3.fromRGB(200, 65, 65)
+
+	elseif MessageType == "Success" then
+		NewMessageFrame.TextColor3 = Color3.fromRGB(100, 200, 100)
+		
+	elseif typeof(MessageType) == "Color3" then
+		
+		NewMessageFrame.TextColor3 = MessageType
+
+	else
+		NewMessageFrame.TextColor3 = Color3.fromRGB(220, 220, 220)
+	end
+
+	FeedScrollingFrame.CanvasPosition = Vector2.new(
+		0,
+		FeedScrollingFrame.AbsoluteCanvasSize.Y
+	)
+
+	CommandFrame.LayoutOrder = Logs + 1
+	
+	local BDelay = math.random(1, 10) / 100
+
+	task.wait(BDelay)
+	
+end
+
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
+RunService.RenderStepped:Wait()
+RunService.RenderStepped:Wait()
+
+TweenGUIOpen()
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local ContextActionService = game:GetService("ContextActionService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
+local UserService = game:GetService("UserService")
+local CoreGui = game:WaitForChild("CoreGui", 5)
+local VirtualUser = game:GetService("VirtualUser")
+
+local CVersion = 2.5
+local CExecutor = "Unknown Executor/Client Script"
+local Platform = "Unknown"
+local LatestVersion = "Unknown"
+local VersionFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/Version"
+CommandPromptGUI:SetAttribute("Version", CVersion)
+
+local PlatformNames = {
+	[Enum.Platform.Windows] = "Windows",
+	[Enum.Platform.OSX] = "macOS",
+	[Enum.Platform.IOS] = "iOS",
+	[Enum.Platform.Android] = "Android",
+	[Enum.Platform.UWP] = "UWP",
+	[Enum.Platform.XBoxOne] = "Xbox",
+	[Enum.Platform.PS4] = "PlayStation 4",
+	[Enum.Platform.PS5] = "PlayStation 5",
+	[Enum.Platform.None] = "Unknown"
+}
+
+local ExecutionType = GetExecutionType()
+
+if ExecutionType == "Executor" then
+	
+	if CheckDuplication(CoreGui, CVersion) then
+		return
+	end
+
+	Platform = PlatformNames[UserInputService:GetPlatform()] or "Unknown"
+	LatestVersion = game:HttpGet(VersionFile)
+
+	if type(identifyexecutor) == "function" then
+		local Success, Result = pcall(identifyexecutor)
+
+		if Success and Result then
+			CExecutor = Result
+		else
+			CExecutor = "Unknown Executor"
+		end
+	else
+		CExecutor = "Unknown Executor"
+
+		SendOutput({
+			Type = "Error",
+			Text = "Couldn't get executor name."
+		})
+	end
+
+elseif ExecutionType == "Studio" then
+	
+	local Player = Players.LocalPlayer
+	local PlayerGui = Player:WaitForChild("PlayerGui")
+	
+	if CheckDuplication(PlayerGui, CVersion) then
+		return
+	end
+
+	CExecutor = "Roblox Studio"
+
+	SendOutput({
+		Type = "Error",
+		Text = "You are using Roblox Studio to run CommandPrompt, commands are limited."
+	})
+
+	local PlatformScores = {
+		[Enum.Platform.Windows] = 0,
+		[Enum.Platform.OSX] = 0,
+		[Enum.Platform.IOS] = 0,
+		[Enum.Platform.Android] = 0,
+		[Enum.Platform.UWP] = 0,
+		[Enum.Platform.XBoxOne] = 0,
+		[Enum.Platform.PS4] = 0,
+		[Enum.Platform.PS5] = 0,
+	}
+
+	if UserInputService.KeyboardEnabled then
+		PlatformScores[Enum.Platform.Windows] += 2
+		PlatformScores[Enum.Platform.OSX] += 2
+		PlatformScores[Enum.Platform.UWP] += 2
+	end
+
+	if UserInputService.MouseEnabled then
+		PlatformScores[Enum.Platform.Windows] += 2
+		PlatformScores[Enum.Platform.OSX] += 2
+		PlatformScores[Enum.Platform.UWP] += 2
+	end
+
+	if UserInputService.TouchEnabled then
+		PlatformScores[Enum.Platform.Android] += 2
+		PlatformScores[Enum.Platform.IOS] += 2
+	end
+
+	if UserInputService.GamepadEnabled then
+		PlatformScores[Enum.Platform.XBoxOne] += 2
+		PlatformScores[Enum.Platform.PS4] += 2
+		PlatformScores[Enum.Platform.PS5] += 2
+	end
+
+	local HighestScore = -1
+	local BestPlatforms = {}
+
+	for PlatformEnum, Score in pairs(PlatformScores) do
+		if Score > HighestScore then
+			HighestScore = Score
+			table.clear(BestPlatforms)
+			table.insert(BestPlatforms, PlatformNames[PlatformEnum])
+
+		elseif Score == HighestScore then
+			table.insert(BestPlatforms, PlatformNames[PlatformEnum])
+		end
+	end
+
+	table.sort(BestPlatforms)
+
+	Platform = table.concat(BestPlatforms, "/")
+
+else
+	
+	local Player = Players.LocalPlayer
+	local PlayerGui = Player:WaitForChild("PlayerGui")
+	if CheckDuplication(PlayerGui, CVersion) then
+		return
+	end
+
+	CExecutor = "Roblox Client"
+
+	local PlatformScores = {
+		[Enum.Platform.Windows] = 0,
+		[Enum.Platform.OSX] = 0,
+		[Enum.Platform.IOS] = 0,
+		[Enum.Platform.Android] = 0,
+		[Enum.Platform.UWP] = 0,
+		[Enum.Platform.XBoxOne] = 0,
+		[Enum.Platform.PS4] = 0,
+		[Enum.Platform.PS5] = 0,
+	}
+
+	if UserInputService.KeyboardEnabled then
+		PlatformScores[Enum.Platform.Windows] += 2
+		PlatformScores[Enum.Platform.OSX] += 2
+		PlatformScores[Enum.Platform.UWP] += 2
+	end
+
+	if UserInputService.MouseEnabled then
+		PlatformScores[Enum.Platform.Windows] += 2
+		PlatformScores[Enum.Platform.OSX] += 2
+		PlatformScores[Enum.Platform.UWP] += 2
+	end
+
+	if UserInputService.TouchEnabled then
+		PlatformScores[Enum.Platform.Android] += 2
+		PlatformScores[Enum.Platform.IOS] += 2
+	end
+
+	if UserInputService.GamepadEnabled then
+		PlatformScores[Enum.Platform.XBoxOne] += 2
+		PlatformScores[Enum.Platform.PS4] += 2
+		PlatformScores[Enum.Platform.PS5] += 2
+	end
+
+	local HighestScore = -1
+	local BestPlatforms = {}
+
+	for PlatformEnum, Score in pairs(PlatformScores) do
+		if Score > HighestScore then
+			HighestScore = Score
+			table.clear(BestPlatforms)
+			table.insert(BestPlatforms, PlatformNames[PlatformEnum])
+
+		elseif Score == HighestScore then
+			table.insert(BestPlatforms, PlatformNames[PlatformEnum])
+		end
+	end
+
+	table.sort(BestPlatforms)
+
+	Platform = table.concat(BestPlatforms, "/")
+
+	SendOutput({
+		Type = "Error",
+		Text = "Running as a regular Roblox LocalScript. Executor-specific commands are unavailable."
+	})
+
+end
+
+SendOutput({
+	Type = "Success",
+	Text = "Created core UI..."
+})
+
+local Player = Players.LocalPlayer
+
+local TabFrame = MainFrame:WaitForChild("TabFrame")
+local TogglesFrame = MainFrame:WaitForChild("TogglesFrame")
+local ButtonsFrame = TabFrame:WaitForChild("ButtonsFrame")
+local DropdownsFrame = CommandFrame:WaitForChild("DropdownsFrame")
+local SettingsFrame = CommandPromptGUI:WaitForChild("SettingsFrame")
+local BuilderModeFrame = SettingsFrame:WaitForChild("BuilderModeFrame")
+local BuilderToggleFrame = BuilderModeFrame:WaitForChild("ToggleFrame")
+local TitleFrame = SettingsFrame:WaitForChild("TitleFrame")
+
+local FullScreenButton = ButtonsFrame:WaitForChild("FullScreenButton")
+local CloseButton = ButtonsFrame:WaitForChild("CloseButton")
+local HideButton = ButtonsFrame:WaitForChild("HideButton")
+local SettingsButton = TogglesFrame:WaitForChild("SettingsButton")
+local SendButton = DropdownsFrame:WaitForChild("SendButton")
+local ParamButtonTemplate = DropdownsFrame:WaitForChild("ParamButtonTemplate")
+
+local VTeleportButton = MobileButtonsFrame:WaitForChild("VTeleportButton")
+local RCTPButton = MobileButtonsFrame:WaitForChild("RCTPButton")
+local DToggleButton = BuilderToggleFrame:WaitForChild("ToggleButton")
+local SCloseButton = TitleFrame:WaitForChild("CloseButton")
+
+
+local ReferenceLabel = CommandFrame:WaitForChild("ReferenceLabel")
+
+local placeId = game.PlaceId
+local placeInfo = MarketplaceService:GetProductInfoAsync(placeId)
+local GameName = placeInfo.Name
+
+local RawFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/CommandPrompt"
+
+local FileName = "CommandPrompt.lua"
+
+local LastCommandInfo = {}
+local DropdownMode = false
+local SelectedCommand = ""
+
+local Mobile = {
+	"iOS",
+	"Android",
+}
+
+local PC = {
+	"Windows",
+	"macOS",
+	"UWP",
+}
+
+local Console = {
+	"Xbox",
+	"PlayStation 4",
+	"PlayStation 5",
+}
+
+SendOutput({
+	Type = "Success",
+	Text = "Core variables defined..."
+})
+
+local function SaveScript()
+	
+	if not RunService:IsStudio() then
+	local Source = game:HttpGet(RawFile)
+	writefile(FileName, Source)
+	end
+end
+
+local function QueueReexecute()
+	if not RunService:IsStudio() then
+	if type(queue_on_teleport) == "function" then
+		queue_on_teleport([[
+	            if isfile("CommandPrompt.lua") then
+	                loadstring(readfile("CommandPrompt.lua"))()
+	            end
+	        ]])
+	end
+	end
+end
+
+local function IsPlatformInGroup(PlatformString, Group)
+
+	local Platforms = string.split(string.lower(PlatformString), "/")
+
+	for _, Platform in ipairs(Platforms) do
+
+		for _, GroupPlatform in ipairs(Group) do
+
+			if Platform == string.lower(GroupPlatform) then
+				return true
+			end
+
+		end
+
+	end
+
+	return false
+
+end
+
+if ExecutionType == "Executor" then
+SaveScript()
+QueueReexecute()
+SendOutput({
+	Type = "Success",
+	Text = "CommandPrompt queued for reexecution..."
+})
+end
+
+MessageTemplate.Visible = false
+CommandFrame.Visible = true
+
+local CanDrag = true
+local Dragging = false
+local DragInput
+local DragStart
+local StartPosition
+local DragHandle = TabFrame
+local IsFullscreen = false
+local OriginalSize = MainFrame.Size
+local OriginalPosition = MainFrame.Position
+local OriginalAnchorPoint = MainFrame.AnchorPoint
+
+local DragAction = "CommandPrompt_BlockCamera"
+
+local function BlockCameraInput()
+	ContextActionService:BindActionAtPriority(
+		DragAction,
+		function()
+			return Enum.ContextActionResult.Sink
+		end,
+		false,
+		Enum.ContextActionPriority.High.Value + 1,
+		Enum.UserInputType.MouseMovement,
+		Enum.UserInputType.Touch
+	)
+end
+
+local function GetAvailableValues(Argument)
+
+	local Values = {}
+
+	if Argument.Type == "Player" then
+
+		for _, Player in ipairs(Players:GetPlayers()) do
+			table.insert(Values, Player.Name)
+		end
+
+	elseif Argument.Type == "Boolean" then
+
+		Values = {"true", "false"}
+
+	elseif Argument.Type == "String" then
+
+		Values = Argument.Values or {}
+		
+	elseif Argument.Type == "Number" then
+		
+		Values = Argument.Values or {}
+
+	end
+
+	return Values
+
+end
+
+local function UnblockCameraInput()
+	ContextActionService:UnbindAction(DragAction)
+end
+
+ReferenceLabel.Text = "game.Players."..Player.Name..":"
+
+local function TweenGUIClose()
+
+	local OriginalPosition = MainFrame.Position
+
+	local GoalPosition = UDim2.new(
+		0.5,
+		0,
+		1,
+		0
+	)
+
+	local TweenInfo1 = TweenInfo.new(
+		0.4,
+		Enum.EasingStyle.Quint,
+		Enum.EasingDirection.Out
+	)
+
+	local Tween = TweenService:Create(MainFrame, TweenInfo1, {
+		Position = GoalPosition,
+		Size = UDim2.new(0, 0, 0, 0)
+	})
+
+	Tween:Play()
+
+	Tween.Completed:Wait()
+	MainFrame.Visible = false
+	MainFrame.Position = OriginalPosition
+	if UserInputService.KeyboardEnabled then
+		ReopenButton.Visible = false
+	else
+		ReopenButton.Visible = true
+	end
+
+end
+
+SelectCommand = function(CommandName)
+
+	SelectedCommand = CommandName
+
+	for _, Button in ipairs(DropdownsFrame:GetChildren()) do
+
+		local ParamNumber = Button:GetAttribute("ParamNumber")
+
+		if ParamNumber == nil or ParamNumber == 0 then
+			continue
+		end
+
+		Button:Destroy()
+
+	end
+
+	local Command = CommandData[CommandName]
+	if not Command then return end
+
+	for Index, Argument in ipairs(Command.Args or {}) do
+
+		local NewButton = ParamButtonTemplate:Clone()
+
+		NewButton.Name = tostring(Index)
+		NewButton.Text = Argument.Name
+		NewButton.LayoutOrder = Index
+
+		NewButton:SetAttribute("ParamNumber", Index)
+		NewButton:SetAttribute("ArgumentType", Argument.Type)
+
+		NewButton.Visible = true
+		NewButton.Parent = DropdownsFrame
+		
+		local ScrollingFrame = NewButton:WaitForChild("ScrollingFrame")
+		local Textbox = NewButton:WaitForChild("TextBox")
+
+		ScrollingFrame.Visible = false
+		Textbox.Visible = false
+
+		local Values = GetAvailableValues(Argument)
+
+		NewButton.MouseButton1Click:Connect(function()
+			OpenDropdown(NewButton, Values)
+		end)
+
+	end
+
+end
+
+OpenDropdown = function(Button, Options)
+
+	local ScrollingFrame = Button:FindFirstChild("ScrollingFrame")
+	local Textbox = Button:FindFirstChild("TextBox")
+	if not (ScrollingFrame and Textbox) then return end
+
+	local OptionTemplate = ScrollingFrame:FindFirstChild("OptionButton")
+	if not OptionTemplate then return end
+	
+	local ArgType = Button:GetAttribute("ArgumentType")
+
+	for _, OtherButton in ipairs(DropdownsFrame:GetChildren()) do
+
+		local OtherScrollingFrame = OtherButton:FindFirstChild("ScrollingFrame")
+		local OtherTextbox = OtherButton:FindFirstChild("TextBox")
+
+		if OtherButton == Button then continue end
+
+		if OtherScrollingFrame then
+			OtherScrollingFrame.Visible = false
+		end
+
+		if OtherTextbox then
+			OtherTextbox.Visible = false
+		end
+
+	end
+
+	for _, Child in ipairs(ScrollingFrame:GetChildren()) do
+
+		if Child:IsA("TextButton") and Child ~= OptionTemplate then
+			Child:Destroy()
+		end
+
+	end
+
+	Textbox.Text = ""
+	OptionTemplate.Visible = false
+
+	if ArgType == "String" or ArgType == "Number" then
+
+		ScrollingFrame.Visible = false
+		Textbox.Visible = true
+		Button.TextTransparency = 1
+
+		Textbox.PlaceholderText = ArgType
+
+		if not Textbox:GetAttribute("Connected") then
+
+			Textbox:SetAttribute("Connected", true)
+
+			Textbox.FocusLost:Connect(function(EnterPressed)
+
+				if not EnterPressed then return end
+
+				local SelectedValue = Textbox.Text
+
+				Button:SetAttribute("Value", SelectedValue)
+				Button.Text = SelectedValue
+
+				Textbox.Visible = false
+				Textbox.Text = ""
+				Button.TextTransparency = 0
+
+			end)
+
+		end
+
+		return
+
+	else
+		
+		ScrollingFrame.Visible = true
+		Textbox.Visible = false
+
+	for Index, Value in ipairs(Options or {}) do
+
+		local Option = OptionTemplate:Clone()
+
+		Option.Name = tostring(Value)
+		Option.Text = tostring(Value)
+		Option.LayoutOrder = Index
+		Option.Visible = true
+		Option.Parent = ScrollingFrame
+
+		Option.MouseButton1Click:Connect(function()
+
+			local SelectedValue = tostring(Value)
+
+			if ArgType == "Boolean" then
+				SelectedValue = string.lower(SelectedValue)
+			end
+
+			Button:SetAttribute("Value", SelectedValue)
+			Button.Text = SelectedValue
+
+			ScrollingFrame.Visible = false
+
+			if Button.Name == "0" then
+				SelectCommand(SelectedValue)
+			end
+
+		end)
+
+	end
+	
+end
+
+end
+
+local function ClearDropdownMode()
+	
+	for _, Button in ipairs(DropdownsFrame:GetChildren()) do
+
+		local ParamNumber = Button:GetAttribute("ParamNumber")
+
+		if ParamNumber == nil then
+			continue
+		end
+
+		Button:Destroy()
+
+	end
+
+	SelectedCommand = nil
+
+	local NewButton = ParamButtonTemplate:Clone()
+
+	NewButton.Name = "0"
+	NewButton.Text = "Command"
+	NewButton.LayoutOrder = 0
+
+	NewButton:SetAttribute("ParamNumber", 0)
+
+	NewButton.Visible = true
+	NewButton.Parent = DropdownsFrame
+
+	NewButton.ScrollingFrame.Visible = false
+
+	local Commands = {}
+
+	for CommandName in pairs(CommandData) do
+		table.insert(Commands, CommandName)
+	end
+
+	table.sort(Commands)
+
+	NewButton.MouseButton1Click:Connect(function()
+		OpenDropdown(NewButton, Commands)
+	end)
+
+	SendButton.LayoutOrder = 1000
+
+end
+
+function ToggleDropdownMode()
+
+	DropdownMode = not DropdownMode
+
+	if DropdownMode then
+
+		DropdownsFrame.Visible = true
+		InputTextbox.Visible = false
+		InputTextbox.TextEditable = false
+		DToggleButton.Text = "On"
+		ClearDropdownMode()
+
+	else
+
+		DropdownsFrame.Visible = false
+		InputTextbox.Visible = true
+		InputTextbox.TextEditable = true
+		DToggleButton.Text = "Off"
+
+	end
+
+end
+
+SendButton.MouseButton1Click:Connect(function()
+
+	if not SelectedCommand then
+		SendOutput({
+			Type = "Error",
+			Text = "No command selected."
+		})
+		return end
+
+	local Command = CommandData[SelectedCommand]
+	if not Command then SendOutput({
+			Type = "Error",
+			Text = "No command selected."
+		}) return end
+
+
+	local Arguments = Command.Args or {}
+	local Params = {}
+
+	for _, Button in ipairs(DropdownsFrame:GetChildren()) do
+
+		local ParamNumber = Button:GetAttribute("ParamNumber")
+		local Value = Button:GetAttribute("Value")
+		
+		local ScrollingFrame = Button:FindFirstChild("ScrollingFrame")
+		if ScrollingFrame then
+			ScrollingFrame.Visible = false
+		end
+
+		if ParamNumber == nil or ParamNumber == 0 then
+			continue
+		end
+
+		if Value ~= nil then
+			Params[ParamNumber] = tostring(Value)
+		end
+
+	end
+
+	
+	for Index, Argument in ipairs(Arguments) do
+
+		if Params[Index] == nil then
+
+			SendOutput({
+				Type = "Error",
+				Text = "Missing parameter: " .. Argument.Name.." - Type: "..Argument.Type
+			})
+
+			return
+
+		end
+
+	end
+
+	local CommandString = SelectedCommand
+
+	for Index = 1, #Arguments do
+		CommandString ..= " " .. Params[Index]
+	end
+
+	ExecuteCommand(CommandString)
+
+end)
+
+local function UpdateDrag(Input)
+	local Delta = Input.Position - DragStart
+
+	MainFrame.Position = UDim2.new(
+		StartPosition.X.Scale,
+		StartPosition.X.Offset + Delta.X,
+		StartPosition.Y.Scale,
+		StartPosition.Y.Offset + Delta.Y
+	)
+end
+
+DragHandle.InputBegan:Connect(function(Input)
+	if not CanDrag then
+		return
+	end
+
+	if Input.UserInputType == Enum.UserInputType.MouseButton1
+		or Input.UserInputType == Enum.UserInputType.Touch then
+
+		Dragging = true
+		DragStart = Input.Position
+		StartPosition = MainFrame.Position
+
+		BlockCameraInput()
+
+		Input.Changed:Connect(function()
+			if Input.UserInputState == Enum.UserInputState.End then
+				Dragging = false
+				UnblockCameraInput()
+			end
+		end)
+	end
+end)
+
+DragHandle.InputChanged:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseMovement
+		or Input.UserInputType == Enum.UserInputType.Touch then
+
+		DragInput = Input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+	if Dragging and Input == DragInput and CanDrag then
+		UpdateDrag(Input)
+	end
+end)
+
+local HoverAffectButtons = {HideButton,
+	FullScreenButton,
+	CloseButton, SendButton, DToggleButton, SettingsButton, SCloseButton}
+
+for _, Button in pairs(HoverAffectButtons) do
+
+	Button.MouseEnter:Connect(function()
+		Button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+		Button.BackgroundTransparency = 0
+	end)
+
+	Button.MouseLeave:Connect(function()
+		Button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		Button.BackgroundTransparency = 1
+	end)
+
+end
+
+CloseButton.MouseButton1Click:Connect(function()
+
+	TweenGUIClose()
+	CommandPromptGUI:Destroy()
+
+	for CommandName, Command in pairs(CommandData) do
+
+		local Data = Command.Data
+		local StoredValues = Data.StoredValues
+
+		if Data.Disconnect and StoredValues.Enabled then
+			Data.Disconnect(StoredValues)
+		end
+	end
+
+	if ExecutionType == "Executor" then
+		if isfile(FileName) then
+			delfile(FileName)
+		end
+	end
+
+end)
+
+FullScreenButton.MouseButton1Click:Connect(function()
+
+	IsFullscreen = not IsFullscreen
+
+	if IsFullscreen then
+		MainFrame.Size = UDim2.new(1, 0, 1, 0)
+		MainFrame.Position = UDim2.new(0, 0, 0, 0)
+		MainFrame.AnchorPoint = Vector2.new(0, 0)
+		CanDrag = false
+	else
+		MainFrame.Size = OriginalSize
+		MainFrame.Position = OriginalPosition
+		MainFrame.AnchorPoint = OriginalAnchorPoint
+		CanDrag = true
+	end
+
+end)
+
+SettingsButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = false
+	SettingsFrame.Visible = true
+end)
+
+SCloseButton.MouseButton1Click:Connect(function()
+	SettingsFrame.Visible = false
+	MainFrame.Visible = true
+end)
+
+InputTextbox.FocusLost:Connect(function(EnterPressed)
+
+	if not EnterPressed then
+		return
+	end
+
+	local Text = InputTextbox.Text
+
+	InputTextbox.Text = ""
+
+	ExecuteCommand(Text)
+end)
+
+HideButton.Activated:Connect(function()
+	TweenGUIClose()
+	IsFullscreen = false
+	CanDrag = true
+	ContextActionService:UnbindAction("OpenCommandTextbox")
+end)
+
+UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+	
+	if GameProcessed then
+		return
+	end
+
+	if MainFrame.Visible then
+		if Input.KeyCode == Enum.KeyCode.F6
+			or Input.KeyCode == Enum.KeyCode.ButtonX then
+			FocusCommandPrompt()
+		end
+		return
+	end
+
+	if Input.KeyCode == Enum.KeyCode.RightAlt
+		or Input.KeyCode == Enum.KeyCode.DPadUp then
+
+		TweenGUIOpen()
+	
+	end
+end)
+
+ReopenButton.MouseButton1Click:Connect(function()
+
+	if MainFrame.Visible == false then
+		TweenGUIOpen()
+	end
+
+end)
+
+DToggleButton.MouseButton1Click:Connect(function()
+	ToggleDropdownMode()
+end)
+
+SendOutput({
+	Type = "Success",
+	Text = "UI created..."
+})
+
+local function Teleport(Player, OtherPlayer)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local OtherCharacter = OtherPlayer.Character
+	
+	if Player == OtherPlayer then
+		Result.Result = "Failed"
+		Result.Message = "Why the hell would you ever even think of teleporting to yourself?."
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	if not OtherCharacter then
+		Result.Result = "Failed"
+		Result.Message = "Target player has no Character."
+		return Result
+	end
+
+	local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+	local OtherHumanoidRootPart = OtherCharacter:FindFirstChild("HumanoidRootPart")
+
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if not OtherHumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Target player missing HumanoidRootPart."
+		return Result
+	end
+
+	HumanoidRootPart.CFrame = OtherHumanoidRootPart.CFrame
+
+	Result.Result = "Success"
+	Result.Message = "Teleport success."
+
+	return Result
+end
+
+local function HasCanCollide(Instance)
+	local Success, Result = pcall(function()
+		return Instance.CanCollide
+	end)
+
+	return Success
+end
+
+local function Noclip(Player, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	local NData = CommandData.Noclip.Data
+	local StoredValues = NData.StoredValues
+
+	if Toggle == false and not StoredValues.Active then
+		Result.Result = "Failed"
+		Result.Message = "Noclip isn't active."
+		return Result
+	end
+
+	for _, Part in ipairs(Character:GetDescendants()) do
+		if HasCanCollide(Part) then
+
+			if Toggle then
+
+				if Part:GetAttribute("DefaultCanCollide") == nil then
+					Part:SetAttribute("DefaultCanCollide", Part.CanCollide)
+				end
+
+				Part.CanCollide = false
+
+			else
+
+				local DefaultValue = Part:GetAttribute("DefaultCanCollide")
+
+				if DefaultValue ~= nil then
+					Part.CanCollide = DefaultValue
+					Part:SetAttribute("DefaultCanCollide", nil)
+				end
+
+			end
+		end
+	end
+
+	StoredValues.Enabled = Toggle
+	StoredValues.Active = Toggle
+
+	Result.Result = "Success"
+	Result.Message = Toggle and "Noclip enabled." or "Noclip disabled."
+
+	return Result
+
+end
+
+local function AntiVoid(Player, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+
+	local Data = CommandData.AntiVoid.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "AntiVoid isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "AntiVoid disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if not Character or not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.Part then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(HumanoidRootPart)
+
+	StoredValues.Part = ConnectionData.Part
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+
+	Result.Result = "Success"
+	Result.Message = "AntiVoid enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function HipHeight(Player, Value, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+	local Data = CommandData.SetHipheight.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "SetHipheight isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "SetHipheight disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing Humanoid."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Humanoid, Value)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalHipHeight = ConnectionData.OriginalHipHeight
+	StoredValues.Humanoid = Humanoid
+
+	Result.Result = "Success"
+	Result.Message = "HipHeight set to " .. Value .. "."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function SetWalkspeed(Player, Value, Toggle)
+	local Result = {}
+	local Character = Player.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+	local Data = CommandData.SetWalkspeed.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "SetWalkspeed isn't active."
+			return Result
+		end
+
+		Result.Result = "Success"
+		Result.Message = "SetWalkspeed disabled."
+		StoredValues.Active = false
+		Data.Disconnect(StoredValues)
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing Humanoid."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Humanoid, Value, Player)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalSpeed = ConnectionData.OriginalSpeed
+	StoredValues.Humanoid = Humanoid
+
+	Result.Result = "Success"
+	Result.Message = "Walkspeed set to " .. Value .. "."
+	StoredValues.Active = true
+	return Result
+end
+
+local function Hide(Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.Hide.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "HideSpot isn't active."
+			return Result
+		end
+
+		Data.Disconnect()
+
+		Result.Result = "Success"
+		Result.Message = "HideSpot disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+
+	local Character = Player.Character
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.ConnectionName then
+		Data.Disconnect()
+	end
+
+	local Success, ErrorMessage = pcall(function()
+		Data.Connect()
+	end)
+
+	if not Success then
+		Result.Result = "Failed"
+		Result.Message = tostring(ErrorMessage)
+		return Result
+	end
+
+	Result.Result = "Success"
+	Result.Message = "HideSpot enabled."
+	Result.Model = StoredValues.Model
+	StoredValues.Active = true
+
+	return Result
+
+end
+
+local function SetJumppower(Player, Value, Toggle)
+
+	local Result = {}
+	local Character = Player.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+	local Data = CommandData.SetJumppower.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "SetJumppower isn't active."
+			return Result
+		end
+
+		Result.Result = "Success"
+		Result.Message = "SetJumppower disabled."
+		StoredValues.Active = false
+		Data.Disconnect(StoredValues)
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing Humanoid."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Humanoid, Value)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalJumppower = ConnectionData.OriginalJumppower
+	StoredValues.Humanoid = Humanoid
+
+	Result.Result = "Success"
+	Result.Message = "Jumppower set to " .. Value .. "."
+	StoredValues.Active = true
+	return Result
+
+end
+
+local function ESP(Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.ESP.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "ESP isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "ESP disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+
+	if StoredValues.Enabled then
+		Data.Disconnect(StoredValues)
+	end
+
+	Data.Connect()
+
+	Result.Result = "Success"
+	Result.Message = "ESP enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function RejoinGame(Player)
+	
+	local Result = {}
+	
+	if RunService:IsStudio() then
+		Result.Result = "Failed"
+		Result.Message = "This command can't be used here."
+		return Result
+	end
+
+	local Success, ErrorMessage = pcall(function()
+		TeleportService:TeleportToPlaceInstance(
+			game.PlaceId,
+			game.JobId,
+			Player
+		)
+	end)
+
+	if not Success then
+		Result.Result = "Failed"
+		Result.Message = "Failed to rejoin: "..tostring(ErrorMessage)
+		return Result
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Rejoining current server..."
+	return Result
+	
+end
+
+local function Follow(Player, OtherPlayer, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+	
+
+	local Data = CommandData.Follow.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Follow isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "Follow disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if OtherPlayer == Player then
+		Result.Result = "Failed"
+		Result.Message = "You cannot follow yourself."
+		return Result
+	end
+
+	local OtherCharacter = OtherPlayer.Character
+	if not OtherCharacter then
+		Result.Result = "Failed"
+		Result.Message = "Target player has no Character."
+		return Result
+	end
+	local OtherHumanoidRootPart = OtherCharacter:FindFirstChild("HumanoidRootPart")
+
+	if not OtherHumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Target player missing HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(HumanoidRootPart, OtherPlayer)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+	StoredValues.OtherPlayer = OtherPlayer
+
+	Result.Result = "Success"
+	Result.Message = "Following " .. OtherPlayer.Name .. "."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function Fullbright(Player, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.Fullbright.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Fullbright isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "Fullbright disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect()
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalValues = ConnectionData.OriginalValues
+
+	Result.Result = "Success"
+	Result.Message = "Fullbright enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function Freecam(Player, Amount, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.Freecam.Data
+	local StoredValues = Data.StoredValues
+
+	local Camera = workspace.CurrentCamera
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Freecam isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "Freecam disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ViewData = CommandData.View.Data
+	local ViewValues = ViewData.StoredValues
+
+	if ViewValues.Connection then
+		ViewData.Disconnect(ViewValues)
+	end
+
+	Camera = workspace.CurrentCamera
+
+	if not Camera then
+		Result.Result = "Failed"
+		Result.Message = "Camera not found."
+		return Result
+	end
+
+	local ConnectionData = Data.Connect(Camera, Amount, Player)
+
+	if not ConnectionData.Connection then
+		Data.Disconnect(ConnectionData)
+
+		Result.Result = "Failed"
+		Result.Message = "Failed to initialize Freecam."
+		return Result
+	end
+
+	StoredValues.Connection = ConnectionData.Connection
+
+	StoredValues.InputBegan = ConnectionData.InputBegan
+	StoredValues.InputEnded = ConnectionData.InputEnded
+	StoredValues.InputChanged = ConnectionData.InputChanged
+
+	StoredValues.Humanoid = ConnectionData.Humanoid
+	StoredValues.OriginalWalkSpeed = ConnectionData.OriginalWalkSpeed
+	StoredValues.OriginalJumpPower = ConnectionData.OriginalJumpPower
+	StoredValues.OriginalJumpHeight = ConnectionData.OriginalJumpHeight
+	StoredValues.OriginalAutoRotate = ConnectionData.OriginalAutoRotate
+
+	StoredValues.Camera = Camera
+	StoredValues.OriginalCameraType = ConnectionData.OriginalCameraType
+	StoredValues.OriginalCameraSubject = ConnectionData.OriginalCameraSubject
+	StoredValues.OriginalCFrame = ConnectionData.OriginalCFrame
+
+	StoredValues.OriginalMouseBehavior = ConnectionData.OriginalMouseBehavior
+	StoredValues.OriginalMouseIconEnabled = ConnectionData.OriginalMouseIconEnabled
+
+	Result.Result = "Success"
+	Result.Message = "Freecam enabled at speed " .. Amount .. "."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function RightClickTP(Player, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.RightClickTP.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+
+			Result.Result = "Failed"
+			Result.Message = "RightClickTP isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "RightClickTP disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if StoredValues.ButtonConnection
+		or StoredValues.TouchConnection
+		or StoredValues.InputConnection then
+
+		Data.Disconnect(StoredValues)
+	end
+
+	Data.Connect(Player)
+
+	Result.Result = "Success"
+	Result.Message = "RightClickTP enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function VFowardTeleport(Player, Distance, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.VFowardTeleport.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "VFowardTeleport isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "VFowardTeleport disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Distance)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.Distance = Distance
+
+	Result.Result = "Success"
+	Result.Message = "VFowardTeleport enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function XRay(Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.XRay.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "XRay isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "XRay disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect()
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalValues = ConnectionData.OriginalValues
+
+	Result.Result = "Success"
+	Result.Message = "XRay enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function View(Player, OtherPlayer, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.View.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "View isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "View disabled."
+		StoredValues.Active = false
+		return Result
+	end
+	
+	if Player == OtherPlayer then
+		Result.Result = "Failed"
+		Result.Message = "That would just waste memory son."
+		return Result
+	end
+
+	if not OtherPlayer then
+		Result.Result = "Failed"
+		Result.Message = "Target player required."
+		return Result
+	end
+
+	local OtherCharacter = OtherPlayer.Character
+	if not OtherCharacter then
+		Result.Result = "Failed"
+		Result.Message = "Target player has no character."
+		return Result
+	end
+	
+	local OtherHumanoid = OtherCharacter:FindFirstChildOfClass("Humanoid")
+
+	if not OtherHumanoid then
+		Result.Result = "Failed"
+		Result.Message = "Target player missing Humanoid."
+		return Result
+	end
+
+	local FreecamValues =
+		CommandData.Freecam.Data.StoredValues
+
+	if FreecamValues.Connection then
+		CommandData.Freecam.Data.Disconnect(FreecamValues)
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(OtherPlayer)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.OriginalCameraSubject = ConnectionData.OriginalCameraSubject
+	StoredValues.OtherPlayer = OtherPlayer
+
+	SendOutput({
+		Type = "Info",
+		Text = "Inventory of " .. OtherPlayer.Name .. ":"
+	})
+
+	local Backpack = OtherPlayer:FindFirstChildOfClass("Backpack")
+	local Items = {}
+
+	if Backpack then
+		for _, Item in ipairs(Backpack:GetChildren()) do
+			table.insert(Items, Item.Name)
+		end
+	end
+
+	for _, Item in ipairs(OtherCharacter:GetChildren()) do
+		if Item:IsA("Tool") then
+			table.insert(Items, Item.Name .. " (Equipped)")
+		end
+	end
+
+	if #Items == 0 then
+		SendOutput({
+			Type = "Info",
+			Text = "No inventory items found."
+		})
+	else
+		for _, ItemName in ipairs(Items) do
+			SendOutput({
+				Type = "Info",
+				Text = "- " .. ItemName
+			})
+		end
+	end
+
+	SendOutput({
+		Type = "Info",
+		Text = "Humanoid properties:"
+	})
+
+	local Properties = {
+		"Health",
+		"MaxHealth",
+		"WalkSpeed",
+		"JumpPower",
+		"JumpHeight",
+		"HipHeight",
+		"DisplayName",
+		"RigType",
+		"PlatformStand",
+		"Sit",
+		"AutoRotate",
+		"UseJumpPower"
+	}
+
+	for _, Property in ipairs(Properties) do
+		local Success, Value = pcall(function()
+			return OtherHumanoid[Property]
+		end)
+
+		if Success then
+			SendOutput({
+				Type = "Info",
+				Text = Property .. " = " .. tostring(Value)
+			})
+		end
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Viewing " .. OtherPlayer.Name .. "."
+	StoredValues.Active = true
+
+	return Result
+end
+
+function PartJump(Player, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+	local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+
+	local Data = CommandData.PartJump.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "PartJump isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "PartJump disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing Character."
+		return Result
+	end
+	
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing Humanoid."
+		return Result
+	end
+	
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Humanoid, HumanoidRootPart)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.Humanoid = Humanoid
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+
+	Result.Result = "Success"
+	Result.Message = "PartJump enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function JoinGame(Player, PlaceId)
+
+	local Result = {}
+
+	if ExecutionType == "Studio" then
+		Result.Result = "Failed"
+		Result.Message = "This command can't be used in studio for obvious reasons."
+		return Result
+	end
+
+	local Success, AResult = pcall(function()
+
+		return TeleportService:Teleport(PlaceId, Player)
+	end)
+
+	if not Success then
+		Result.Result = "Failed"
+		Result.Message = "Failed to join place: " .. tostring(AResult)
+		return Result
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Teleporting to place: " .. PlaceId
+
+	return Result
+
+end
+
+local function ServerHop(Player)
+
+	local Result = {}
+
+	if ExecutionType == "Studio" then
+		Result.Result = "Failed"
+		Result.Message = "This command can't be used in Studio goofball."
+		return Result
+	end
+
+	local PlaceID = game.PlaceId
+	local AllIDs = {}
+	local FoundAnything = ""
+	local ActualHour = os.date("!*t").hour
+
+	local FileName = "NotSameServers.json"
+
+	if ExecutionType == "Executor" then
+		local FileSuccess, FileData = pcall(function()
+			return HttpService:JSONDecode(readfile(FileName))
+		end)
+
+		if FileSuccess and type(FileData) == "table" then
+			AllIDs = FileData
+		end
+	end
+
+	if tonumber(AllIDs[1]) ~= ActualHour then
+		AllIDs = {ActualHour}
+	end
+
+	local function SaveHistory()
+		if ExecutionType ~= "Executor" then
+			return
+		end
+
+		pcall(function()
+			writefile(FileName, HttpService:JSONEncode(AllIDs))
+		end)
+	end
+
+	local function HasVisited(ID)
+		for Index = 2, #AllIDs do
+			if tostring(AllIDs[Index]) == tostring(ID) then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	for Page = 1, 20 do
+
+		local URL = "https://games.roblox.com/v1/games/"
+			.. PlaceID
+			.. "/servers/Public?sortOrder=Asc&limit=100"
+
+		if FoundAnything ~= "" then
+			URL ..= "&cursor=" .. HttpService:UrlEncode(FoundAnything)
+		end
+
+		local Success, Site = pcall(function()
+
+			local Response
+
+			if ExecutionType == "Executor" then
+				Response = game:HttpGet(URL)
+			else
+				Response = HttpService:GetAsync(URL)
+			end
+
+			return HttpService:JSONDecode(Response)
+
+		end)
+
+		if not Success or type(Site) ~= "table"
+			or type(Site.data) ~= "table" then
+
+			Result.Result = "Failed"
+			Result.Message = "Failed to retrieve server list."
+			return Result
+		end
+
+		for _, Server in ipairs(Site.data) do
+
+			local ID = tostring(Server.id)
+
+			local Available = Server.playing < Server.maxPlayers
+			local NotCurrent = ID ~= game.JobId
+
+			if Available and NotCurrent and not HasVisited(ID) then
+
+				table.insert(AllIDs, ID)
+
+				local TeleportSuccess, ErrorMessage = pcall(function()
+					TeleportService:TeleportToPlaceInstance(
+						PlaceID,
+						ID,
+						Player
+					)
+				end)
+
+				if TeleportSuccess then
+					Result.Result = "Success"
+					Result.Message = "Joining server: " .. ID
+					return Result
+				end
+
+				table.remove(AllIDs, #AllIDs)
+				SaveHistory()
+
+				warn("Server hop failed:", ErrorMessage)
+			end
+		end
+
+		FoundAnything = Site.nextPageCursor or ""
+
+		if FoundAnything == "" then
+			break
+		end
+	end
+
+	Result.Result = "Failed"
+	Result.Message = "No available unvisited servers found."
+
+	return Result
+end
+
+
+local function FormatList(List)
+	local Output = {}
+
+	for _, Value in ipairs(List or {}) do
+		if typeof(Value) == "table" then
+			Value = Value.Name or Value.Type or Value.Description or "Unknown"
+		end
+
+		table.insert(Output, tostring(Value))
+	end
+
+	return #Output > 0 and table.concat(Output, ", ") or "None"
+end
+
+function GetCommandInfo(CommandAlias)
+	
+	local CommandInfo
+	local Command = nil
+
+	for Name, Data in pairs(CommandData) do
+		if Name:lower() == CommandAlias:lower() then
+			CommandInfo = Data
+			Command = Name
+			break
+		end
+
+		for _, Alias in ipairs(Data.Alias or {}) do
+			if Alias:lower() == CommandAlias:lower() then
+				CommandInfo = Data
+				Command = Name
+				break
+			end
+		end
+
+		if CommandInfo then
+			break
+		end
+	end
+
+	local Result = {}
+
+	if not CommandInfo then
+		Result.Result = "Failed"
+		Result.Message = "Invalid command."
+		return Result
+	end
+	
+	if CommandInfo.Hidden then
+		Result.Result = "Failed"
+		Result.Message = "Nah bro idk what ur talking bout."
+		return Result
+	end
+
+	local Info = {
+		"Command: " .. tostring(Command),
+		"Args: " .. FormatList(CommandInfo.Args),
+		"Aliases: " .. FormatList(CommandInfo.Alias),
+		"CleanupOnDeath: " .. tostring(CommandInfo.CleanupOnDeath),
+		"Description: " .. tostring(CommandInfo.Description),
+		"Overrides: "..FormatList(CommandInfo.Overrides)
+	}
+
+	Result.Result = "Success"
+	Result.Message = "Displayed command information."
+	
+	SendOutput({
+		Text = "Command Information:",
+	})
+	
+	for _, Info in ipairs(Info) do
+		SendOutput({
+			Text = Info,
+		})
+	end
+
+	return Result
+end
+
+
+local function GetPublicData(URL)
+
+	local Success, Response = pcall(function()
+
+		if ExecutionType == "Executor" then
+			return game:HttpGet(URL)
+		else
+			error("HTTP requests require a server-side handler.")
+		end
+
+	end)
+
+	if not Success then
+		SendOutput({
+			Type = "Error",
+			Text = "HTTP Request Failed:\n"
+				.. URL .. "\n"
+				.. tostring(Response),
+		})
+
+		return nil
+	end
+
+	local DecodeSuccess, Data = pcall(function()
+		return HttpService:JSONDecode(Response)
+	end)
+
+	if not DecodeSuccess then
+		SendOutput({
+			Type = "Error",
+			Text = "JSON Decode Failed:\n"
+				.. URL .. "\n"
+				.. tostring(Data),
+		})
+
+		return nil
+	end
+
+	if type(Data) ~= "table" then
+		SendOutput({
+			Type = "Error",
+			Text = "Invalid API Response:\n" .. URL,
+		})
+
+		return nil
+	end
+
+	if Data.errors then
+		SendOutput({
+			Type = "Error",
+			Text = "API Error:\n"
+				.. URL .. "\n"
+				.. tostring(Data.errors),
+		})
+
+		return nil
+	end
+
+	return Data
+end
+
+
+local function GetPlayerInfo(Username)
+
+	local Result = {}
+
+	local Success, UserId = pcall(function()
+		return Players:GetUserIdFromNameAsync(Username)
+	end)
+
+	if not Success then
+		Result.Result = "Failed"
+		Result.Message = "Invalid name."
+		return Result
+	end
+
+	local PlayerObject = Players:GetPlayerByUserId(UserId)
+
+	local InfoSuccess, UserInfos = pcall(function()
+		return UserService:GetUserInfosByUserIdsAsync({UserId})
+	end)
+
+	if not InfoSuccess or not UserInfos[1] then
+		Result.Result = "Failed"
+		Result.Message = "Unable to retrieve user information."
+		return Result
+	end
+
+	local User = UserInfos[1]
+
+	local Profile = GetPublicData(
+		"https://users.roblox.com/v1/users/" .. UserId
+	)
+
+	local Friends = GetPublicData(
+		"https://friends.roblox.com/v1/users/" .. UserId .. "/friends/count"
+	)
+
+	local Followers = GetPublicData(
+		"https://friends.roblox.com/v1/users/" .. UserId .. "/followers/count"
+	)
+
+	local Following = GetPublicData(
+		"https://friends.roblox.com/v1/users/" .. UserId .. "/followings/count"
+	)
+
+	local Headshot = GetPublicData(
+		"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds="
+			.. UserId .. "&size=150x150&format=Png&isCircular=false"
+	)
+
+	local UsernameHistory = GetPublicData(
+		"https://users.roblox.com/v1/users/" .. UserId
+			.. "/username-history?limit=100&sortOrder=Asc"
+	)
+
+	local AccountAge = "Unavailable"
+	local AccountCreated = "Unavailable"
+
+	if Profile and Profile.created then
+		local Date = DateTime.fromIsoDate(Profile.created)
+
+		if Date then
+			AccountCreated = Date:FormatLocalTime(
+				"YYYY, MMMM D, h:mm A",
+				"en-us"
+			)
+
+			AccountAge = math.floor(
+				(DateTime.now().UnixTimestamp - Date.UnixTimestamp) / 86400
+			) .. " Days"
+		end
+	end
+
+	local PreviousUsernames = {}
+
+	if UsernameHistory and UsernameHistory.data then
+		for _, Entry in ipairs(UsernameHistory.data) do
+			table.insert(PreviousUsernames, Entry.name)
+		end
+	end
+
+	local HeadshotURL = "Unavailable"
+
+	if Headshot and Headshot.data and Headshot.data[1] then
+		HeadshotURL = Headshot.data[1].imageUrl
+	end
+
+	local IsBanned = "Unavailable"
+
+	if Profile and Profile.isBanned ~= nil then
+		IsBanned = Profile.isBanned and "Yes" or "No"
+	end
+
+	local Verified = "Unavailable"
+	if User.HasVerifiedBadge == true then
+		Verified = "Yes"
+	elseif User.HasVerifiedBadge == false then
+		Verified = "No"
+	end
+
+	local Description = "Unavailable"
+	if Profile and Profile.description then
+		if Profile.description == "" then
+			Description = "(No description)"
+		else
+			Description = Profile.description
+		end
+	end
+	
+	local MembershipType = "Unavailable"
+	local HasPremium = false
+	local HasPlus = false
+
+	if PlayerObject then
+
+		HasPremium = PlayerObject.MembershipType == Enum.MembershipType.Premium
+		HasPlus = PlayerObject.HasRobloxSubscription
+
+		local DisplayedMembership = {}
+
+		if HasPlus then
+			table.insert(DisplayedMembership, "Roblox Plus")
+		end
+
+		if HasPremium then
+			table.insert(DisplayedMembership, "Premium")
+		end
+
+		if #DisplayedMembership > 0 then
+			MembershipType = table.concat(DisplayedMembership, " and ")
+		else
+			MembershipType = "Free"
+		end
+	end
+
+	local Info = {
+
+		Username = User.Username,
+		DisplayName = User.DisplayName,
+		UserId = User.Id,
+
+		Verified = Verified,
+
+		AccountCreated = AccountCreated,
+		AccountAge = AccountAge,
+		IsBanned = IsBanned,
+		Description = Description,
+
+		MembershipType = MembershipType,
+
+		FriendsCount = Friends and Friends.count or "Unavailable",
+		FollowersCount = Followers and Followers.count or "Unavailable",
+		FollowingCount = Following and Following.count or "Unavailable",
+
+		PreviousUsernames = FormatList(PreviousUsernames),
+
+		HeadshotURL = HeadshotURL,
+
+		ProfileURL = "https://www.roblox.com/users/"
+			.. User.Id .. "/profile",
+	}
+
+	local InfoOrder = {
+		"Username",
+		"DisplayName",
+		"UserId",
+		"Verified",
+		"AccountCreated",
+		"AccountAge",
+		"IsBanned",
+		"Description",
+		"MembershipType",
+		"FriendsCount",
+		"FollowersCount",
+		"FollowingCount",
+		"PreviousUsernames",
+		"HeadshotURL",
+		"ProfileURL",
+	}
+
+	SendOutput({
+		Text = "Player Information:",
+	})
+
+	for _, Key in ipairs(InfoOrder) do
+		SendOutput({
+			Text = Key .. ": " .. tostring(Info[Key]),
+		})
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Displayed player information."
+
+	return Result
+end
+
+local function RepeatCommand()
+
+	local Result = {}
+
+	if not LastCommandInfo.Command then
+		Result.Result = "Failed"
+		Result.Message = "There is no previous command."
+		return Result
+	end
+
+	if LastCommandInfo.Command == "RepeatCommand" then
+		Result.Result = "Failed"
+		Result.Message = "You can't repeat THE repeat command silly."
+	elseif LastCommandInfo.Command == "LoopCommand" then
+		Result.Result = "Failed"
+		Result.Message = "You're NOT going to repeat the loop command."	
+		return Result
+	end
+
+	local Text = LastCommandInfo.Command
+
+	for _, Arg in ipairs(LastCommandInfo.ArgValues) do
+		Text ..= " " .. tostring(Arg)
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Repeating command..."
+
+	task.defer(ExecuteCommand, Text)
+
+	return Result
+end
+
+local function LoopCommand(Args)
+	
+	local Result = {}
+	
+	local Data = CommandData.LoopCommand.Data
+	local StoredValues = Data.StoredValues
+	local DelayA = Args[2]
+	local Toggle = Args[1]
+
+	if not LastCommandInfo.Command then
+		Result.Result = "Failed"
+		Result.Message = "There is no command to loop."
+		return Result
+	end
+
+	if LastCommandInfo.Command == "RepeatCommand" or
+		LastCommandInfo.Command == "LoopCommand" then
+		Result.Result = "Failed"
+		Result.Message = "You can't repeat THE repeat command silly."
+	elseif LastCommandInfo.Command == "LoopCommand" then
+		Result.Result = "Failed"
+		Result.Message = "That would be stupid."	
+		return Result
+	end
+	
+	if DelayA < 0 then
+		Result.Result = "Failed"
+		Result.Message = "Fuck you mean "..DelayA.."? I suggest picking something above 0."
+		return Result	
+	end
+
+	if not Toggle then
+		
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Loop isn't active."
+			return Result
+		end
+		
+		Result.Result = "Success"
+		Result.Message = "Loop disabled."
+		StoredValues.Active = false
+		
+	else
+		
+		if StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "There already is an active loop."
+			return Result
+		end
+		
+		StoredValues.Active = true
+		Data.Connect(DelayA)
+		
+		Result.Result = "Success"
+		Result.Message = "Loop enabled."
+		
+	end
+
+	return Result
+	
+end
+
+local function Fly(Player, Amount, Toggle)
+
+	local Result = {}
+
+	local Character = Player.Character
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no character."
+		return Result
+	end
+
+	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing humanoid."
+		return Result
+	end
+
+	local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	local Data = CommandData.Fly.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Fly isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "Fly disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	HumanoidRootPart.Anchored = true
+
+	local Camera = workspace.CurrentCamera
+
+	if not Camera then
+		HumanoidRootPart.Anchored = false
+
+		Result.Result = "Failed"
+		Result.Message = "Camera not found."
+
+		return Result
+	end
+
+	local ConnectionData = Data.Connect(
+		Character,
+		Humanoid,
+		HumanoidRootPart,
+		Amount
+	)
+
+	if not ConnectionData or not ConnectionData.Connection then
+
+		HumanoidRootPart.Anchored = false
+
+		Result.Result = "Failed"
+		Result.Message = "Failed to initialize Fly."
+
+		return Result
+	end
+
+	StoredValues.Connection = ConnectionData.Connection
+
+	StoredValues.InputBegan = ConnectionData.InputBegan
+	StoredValues.InputEnded = ConnectionData.InputEnded
+	StoredValues.InputChanged = ConnectionData.InputChanged
+
+	StoredValues.Humanoid = Humanoid
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+
+	StoredValues.OriginalAutoRotate = ConnectionData.OriginalAutoRotate
+	StoredValues.OriginalPlatformStand = ConnectionData.OriginalPlatformStand
+
+	StoredValues.OriginalCameraType = ConnectionData.OriginalCameraType
+	StoredValues.OriginalCameraSubject = ConnectionData.OriginalCameraSubject
+	StoredValues.OriginalMouseBehavior = ConnectionData.OriginalMouseBehavior
+	StoredValues.OriginalMouseIconEnabled = ConnectionData.OriginalMouseIconEnabled
+
+	Result.Result = "Success"
+	Result.Message = "Fly enabled at speed " .. Amount .. "."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function LoadScript(Script)
+
+	local Result = {}
+
+	if ExecutionType ~= "Executor" then
+		Result.Result = "Failed"
+		Result.Message = "LoadScript is only available in an executor."
+		return Result
+	end
+
+	local Success, ErrorMessage = pcall(function()
+
+		local Source = game:HttpGet(Script)
+
+		local Function, CompileError = loadstring(Source)
+
+		if not Function then
+			error(CompileError)
+		end
+
+		Function()
+
+	end)
+
+	if not Success then
+		Result.Result = "Failed"
+		Result.Message = "Failed to load script: " .. tostring(ErrorMessage)
+		return Result
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Successfully loaded script."
+
+	return Result
+end
+
+local function PartWalk(Player, Toggle, Floored)
+
+	local Result = {}
+
+	local Character = Player.Character
+	local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+
+	local Data = CommandData.PartWalk.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "PartWalk isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "PartWalk disabled."
+		StoredValues.Active = false
+		return Result
+	end
+
+	if not Character or not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player missing HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(HumanoidRootPart, Floored)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.Part = ConnectionData.Part
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+
+	Result.Result = "Success"
+	Result.Message = "PartWalk enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function Orbit(Player, Target, Speed, Distance, Toggle)
+
+	local Result = {}
+
+	local Data = CommandData.Orbit.Data
+	local StoredValues = Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "Orbit isn't active."
+			return Result
+		end
+
+		Data.Disconnect(StoredValues)
+
+		Result.Result = "Success"
+		Result.Message = "Orbit disabled."
+		StoredValues.Active = false
+
+		return Result
+	end
+	
+	if Player == Target then
+		Result.Result = "Failed"
+		Result.Message = "That would just be silly."
+		return Result
+	end
+
+	local Character = Player.Character
+
+	if not Character then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Character."
+		return Result
+	end
+	
+	local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+	if not HumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no HumanoidRootPart."
+		return Result
+	end
+	
+	local Humanoid = Character:FindFirstChild("Humanoid")
+	if not Humanoid then
+		Result.Result = "Failed"
+		Result.Message = "Local player has no Humanoid."
+		return Result
+	end
+
+	local TargetCharacter = Target.Character
+
+	if not TargetCharacter then
+		Result.Result = "Failed"
+		Result.Message = "Target character not found."
+		return Result
+	end
+
+	local TargetHumanoidRootPart = TargetCharacter:FindFirstChild("HumanoidRootPart")
+
+	if not TargetHumanoidRootPart then
+		Result.Result = "Failed"
+		Result.Message = "Target player has no HumanoidRootPart."
+		return Result
+	end
+
+	if StoredValues.Connection then
+		Data.Disconnect(StoredValues)
+	end
+
+	local ConnectionData = Data.Connect(Distance, Target, HumanoidRootPart, Speed)
+
+	StoredValues.Connection = ConnectionData.Connection
+	StoredValues.HumanoidRootPart = HumanoidRootPart
+	StoredValues.Humanoid = Humanoid
+	StoredValues.Target = Target
+	StoredValues.Speed = Speed
+	StoredValues.WasAnchored = ConnectionData.WasAnchored
+	StoredValues.WasAutoRotate = ConnectionData.WasAutoRotate
+	StoredValues.Distance = Distance
+
+	Result.Result = "Success"
+	Result.Message = "Orbit enabled."
+	StoredValues.Active = true
+
+	return Result
+end
+
+local function GetPlayerList()
+
+	local Result = {}
+	local PlayerList = {}
+
+	for _, Player in ipairs(Players:GetPlayers()) do
+		local Info = {}
+		Info.Name = Player.Name
+		Info.DisplayName = Player.DisplayName
+		table.insert(PlayerList, Info)
+	end
+
+	for _, InfoTable in PlayerList do
+		SendOutput({
+			Text = "Name: "..InfoTable.Name.." - DisplayName: "..InfoTable.DisplayName
+		})
+	end
+
+	Result.Result = "Success"
+	Result.Message = "Player list shown."
+	return Result
+
+end
+
+local function AntiIdle(Toggle)
+
+	local Result = {}
+	local StoredValues = CommandData.AntiIdle.Data.StoredValues
+
+	if not Toggle then
+
+		if not StoredValues.Active then
+			Result.Result = "Failed"
+			Result.Message = "AntiIdle isn't active."
+			return Result
+		end
+
+		StoredValues.Active = false
+		StoredValues.Connection:Disconnect()
+		StoredValues.Connection = nil
+
+		Result.Result = "Success"
+		Result.Message = "AntiIdle disabled."
+		return Result
+
+	end
+
+	CommandData.AntiIdle.Data.Connect()
+
+	StoredValues.Active = true
+
+	Result.Result = "Success"
+	Result.Message = "AntiIdle enabled."
+
+	return Result
+	
+end
+
+SendOutput({
+	Type = "Success",
+	Text = "Command functions loaded..."
+})
+CommandData = {
+	
+	["LoopCommand"] = {
+		Alias = {"loop", "commandloop"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"},
+			{Name = "Delay", Type = "Number"}
+		},
+		Description = "Loops the last command (this could be buggy).",
+
+		Data = {
+			StoredValues = {},
+			Connect = function(DelayA)
+				
+				task.spawn(function()
+					
+					local StoredValues = CommandData.LoopCommand.Data.StoredValues
+					local Text = LastCommandInfo.Command
+
+					for _, Arg in ipairs(LastCommandInfo.ArgValues) do
+						Text ..= " " .. tostring(Arg)
+					end
+					
+					while true do
+						
+						if not StoredValues.Active then
+							break
+						end
+
+						ExecuteCommand(Text)
+						task.wait(DelayA)
+						
+					end
+					
+				end)
+				
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return LoopCommand(Args)
+		end,
+	},
+
+	["Teleport"] = {
+		Alias = {"Tp", "Goto", "Moveto"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "OtherPlayer", Type = "Player"}
+		},
+		Description = "Teleports you to the specified player.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return Teleport(Player, Args[1])
+		end,
+	},
+	
+	["Hide"] = {
+		Alias = {"hidespot", "flee", "afkspot", "afkroom", "room"},
+		CleanupOnDeath = true,
+		Overrides = {
+			"Teleport",
+			"VFowardTeleport",
+			"RightClickTP",
+			"Fly",
+			"Orbit",
+			"Follow",
+			"AntiVoid"
+		},
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Teleports you to a safespace.",
+
+		Data = {
+
+			StoredValues = {},
+
+			Connect = function()
+
+				local Data = CommandData.Hide.Data.StoredValues
+
+				local Character = Player.Character
+				if not Character then return end
+
+				local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+				if not HumanoidRootPart then return end
+				
+				Data.OriginalCFrame = HumanoidRootPart.CFrame
+				
+				local RoomSize = 1000
+				local WallThickness = 10
+				local MinYRandom = workspace.FallenPartsDestroyHeight + 100
+
+				local ADistance = 100000
+				local RandomX = math.random(-ADistance, ADistance)
+				local RandomZ = math.random(-ADistance, ADistance)
+				local RandomY = math.random(MinYRandom, ADistance)
+				
+				local SpawnOffset = Data.OriginalCFrame.Position
+				local Farlands = SpawnOffset + Vector3.new(RandomX, RandomY, RandomZ)
+				local SpawnLocation = CFrame.new(Farlands + Vector3.new(0, 5, 0))
+
+				Data.OriginalLighting = {
+					Brightness = Lighting.Brightness,
+					Ambient = Lighting.Ambient,
+					OutdoorAmbient = Lighting.OutdoorAmbient,
+					EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+					EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+					ClockTime = Lighting.ClockTime,
+					FogEnd = Lighting.FogEnd,
+				}
+
+				local NewModel = Instance.new("Model")
+				NewModel.Name = "HideSpot"
+				NewModel.Parent = workspace
+
+				Data.Model = NewModel
+
+				local function CreatePart(Name, Size, Position)
+
+					local Part = Instance.new("Part")
+					Part.Name = Name
+					Part.Size = Size
+					Part.Position = Position
+					Part.Anchored = true
+					Part.CanCollide = true
+					Part.Material = Enum.Material.SmoothPlastic
+					Part.Color = Color3.new(0, 0, 0)
+					Part.Reflectance = 0
+					Part.TopSurface = Enum.SurfaceType.Smooth
+					Part.BottomSurface = Enum.SurfaceType.Smooth
+					Part.Parent = NewModel
+
+					return Part
+				end
+
+				local HalfSize = RoomSize / 2
+
+				CreatePart(
+					"Floor",
+					Vector3.new(RoomSize + WallThickness * 2, WallThickness, RoomSize + WallThickness * 2),
+					Farlands + Vector3.new(0, -WallThickness / 2, 0)
+				)
+
+				CreatePart(
+					"Ceiling",
+					Vector3.new(RoomSize + WallThickness * 2, WallThickness, RoomSize + WallThickness * 2),
+					Farlands + Vector3.new(0, RoomSize + WallThickness / 2, 0)
+				)
+
+				CreatePart(
+					"NorthWall",
+					Vector3.new(RoomSize + WallThickness * 2, RoomSize, WallThickness),
+					Farlands + Vector3.new(0, HalfSize, -HalfSize - WallThickness / 2)
+				)
+
+				CreatePart(
+					"SouthWall",
+					Vector3.new(RoomSize + WallThickness * 2, RoomSize, WallThickness),
+					Farlands + Vector3.new(0, HalfSize, HalfSize + WallThickness / 2)
+				)
+
+				CreatePart(
+					"EastWall",
+					Vector3.new(WallThickness, RoomSize, RoomSize),
+					Farlands + Vector3.new(HalfSize + WallThickness / 2, HalfSize, 0)
+				)
+
+				CreatePart(
+					"WestWall",
+					Vector3.new(WallThickness, RoomSize, RoomSize),
+					Farlands + Vector3.new(-HalfSize - WallThickness / 2, HalfSize, 0)
+				)
+
+				local LightPart = Instance.new("Part")
+				LightPart.Name = "SpawnLight"
+				LightPart.Size = Vector3.new(1, 1, 1)
+				LightPart.Position = Farlands + Vector3.new(0, 12, 0)
+				LightPart.Anchored = true
+				LightPart.CanCollide = false
+				LightPart.Transparency = 1
+				LightPart.Parent = NewModel
+
+				local PointLight = Instance.new("PointLight")
+				PointLight.Brightness = 3
+				PointLight.Range = 60
+				PointLight.Color = Color3.new(1, 1, 1)
+				PointLight.Shadows = true
+				PointLight.Parent = LightPart
+
+				local function ApplyDarkness()
+
+					Lighting.Brightness = 0
+					Lighting.Ambient = Color3.new(0, 0, 0)
+					Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+					Lighting.EnvironmentDiffuseScale = 0
+					Lighting.EnvironmentSpecularScale = 0
+					Lighting.ClockTime = 0
+					Lighting.FogEnd = 100000
+
+				end
+
+				ApplyDarkness()
+
+				Data.LastSafeCFrame = SpawnLocation
+
+				local RoomMinimum = Farlands - Vector3.new(HalfSize - 10, 0, HalfSize - 10)
+				local RoomMaximum = Farlands + Vector3.new(HalfSize - 10, RoomSize, HalfSize - 10)
+
+				local function IsInsideRoom(Root)
+					local Position = Root.Position
+
+					return Position.X >= RoomMinimum.X
+						and Position.X <= RoomMaximum.X
+						and Position.Y >= RoomMinimum.Y
+						and Position.Y <= RoomMaximum.Y
+						and Position.Z >= RoomMinimum.Z
+						and Position.Z <= RoomMaximum.Z
+				end
+
+				HumanoidRootPart.CFrame = SpawnLocation
+
+				Data.Connection = RunService.Heartbeat:Connect(function()
+
+					ApplyDarkness()
+
+					local CurrentCharacter = Player.Character
+					if not CurrentCharacter then return end
+
+					local Root = CurrentCharacter:FindFirstChild("HumanoidRootPart")
+					if not Root then return end
+
+					if IsInsideRoom(Root) then
+						Data.LastSafeCFrame = Root.CFrame
+					else
+						Root.CFrame = Data.LastSafeCFrame
+						Root.AssemblyLinearVelocity = Vector3.zero
+						Root.AssemblyAngularVelocity = Vector3.zero
+					end
+
+				end)
+
+			end,
+
+			Disconnect = function()
+
+				local Data = CommandData.Hide.Data.StoredValues
+
+				if Data.Connection then
+					Data.Connection:Disconnect()
+					Data.Connection = nil
+				end
+
+				if Data.OriginalLighting then
+
+					for Property, Value in pairs(Data.OriginalLighting) do
+						Lighting[Property] = Value
+					end
+
+					Data.OriginalLighting = nil
+
+				end
+
+				if Data.Model then
+					Data.Model:Destroy()
+					Data.Model = nil
+				end
+
+				Data.LastSafeCFrame = nil
+				
+				if Data.OriginalCFrame then
+					local Character = Player.Character
+					if not Character then return end
+					local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+					if not HumanoidRootPart then return end
+					HumanoidRootPart.CFrame = Data.OriginalCFrame
+				end
+
+			end,
+
+		},
+
+		Callback = function(Args)
+			return Hide(Args[1])
+		end,
+	},
+	
+	["PartJump"] = {
+		Alias = {"pj", "jumpplatform", "infjump", "infinitejump"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+
+		Description = "Spawns a temporary platform underneath you whenever you jump.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(Humanoid, HumanoidRootPart)
+
+				local Result = {}
+
+				local Connection = Humanoid:GetPropertyChangedSignal("Jump"):Connect(
+					function(OldState, NewState)
+
+						if not HumanoidRootPart.Parent then
+							return
+						end
+
+						local Part = Instance.new("Part")
+						Part.Name = "JumpPlatform"
+						Part.Size = Vector3.new(4, 1, 4)
+						Part.Anchored = true
+						Part.Transparency = 1
+						Part.CanCollide = true
+						Part.CFrame = CFrame.new(
+							HumanoidRootPart.Position.X,
+							HumanoidRootPart.Position.Y - 1,
+							HumanoidRootPart.Position.Z
+						)
+						Part.Parent = workspace
+
+						task.delay(0.2, function()
+							Part:Destroy()
+						end)
+
+					end
+				)
+
+				Result.Connection = Connection
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return PartJump(Player, Args[1])
+		end,
+	},
+	
+	["AntiIdle"] = {
+		Alias = {"antiafk", "noafk", "afkoff"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+
+		Description = "Prevents Roblox from kicking you for being idle.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+				local Result = {}
+				
+				local function OnIdle()
+					VirtualUser:CaptureController()
+					VirtualUser:ClickButton2(Vector2.new())
+				end
+
+				Result.Connection = Player.Idled:Connect(function()
+					OnIdle()
+				end)
+				
+				OnIdle()
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				local Connection = StoredValues.Connection
+
+				if Connection then
+					Connection:Disconnect()
+				end
+				
+			end,
+		},
+
+		Callback = function(Args)
+
+			return AntiIdle(Args[1])
+		end,
+	},
+	
+	["RepeatCommand"] = {
+		Alias = {"redo", "again", "rep", "twice", "repeat"},
+		CleanupOnDeath = false,
+
+		Args = {
+
+		},
+		Description = "Repeats the last command executed.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return RepeatCommand()
+		end,
+	},
+	
+	["GetPlayerInfo"] = {
+		Alias = {"player", "playerinformation", "playerinfo", "whois", "who"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "OtherPlayer", Type = "String"}
+		},
+		Description = "Outputs the information of the specified player.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return GetPlayerInfo(Args[1])
+		end,
+	},
+	
+	["GetCommandInfo"] = {
+		Alias = {"info", "gci", "command", "commandinfo"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Command", Type = "String"}
+		},
+		Description = "Returns information about the specified command.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return GetCommandInfo(Args[1])
+		end,
+	},
+	
+	["Rejoin"] = {
+		Alias = {"rj"},
+		CleanupOnDeath = false,
+		Args = {},
+		Description = "Rejoins the current game.",
+		Data = {
+			StoredValues = {},
+			Connect = function() end,
+			Disconnect = function() end,
+		},
+		Callback = function()
+			return RejoinGame(Player)
+		end,
+	},
+	
+	["VFowardTeleport"] = {
+		Alias = {"vft", "dash", "fowardteleport", "ft"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Distance", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Teleports you forward by the specified distance when the V key is pressed.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(Distance)
+
+				local Result = {}
+
+				local function TeleportForward()
+					local Character = Player.Character
+					local HumanoidRootPart = Character
+						and Character:FindFirstChild("HumanoidRootPart")
+
+					if not HumanoidRootPart then
+						return
+					end
+
+					local Direction = HumanoidRootPart.CFrame.LookVector
+
+					local Params = RaycastParams.new()
+					Params.FilterType = Enum.RaycastFilterType.Exclude
+					Params.FilterDescendantsInstances = {Character}
+					Params.IgnoreWater = true
+
+					local RayResult = workspace:Raycast(
+						HumanoidRootPart.Position,
+						Direction * Distance,
+						Params
+					)
+
+					local FinalDistance = Distance
+
+					if RayResult then
+						FinalDistance = math.max(RayResult.Distance - 2, 0)
+					end
+
+					local TargetPosition = HumanoidRootPart.Position
+						+ Direction * FinalDistance
+
+					HumanoidRootPart.CFrame = CFrame.new(
+						TargetPosition,
+						TargetPosition + Direction
+					)
+				end
+
+				local Connection = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+					if GameProcessed then
+						return
+					end
+
+					if Input.KeyCode == Enum.KeyCode.V
+						or Input.KeyCode == Enum.KeyCode.ButtonL3 then
+						TeleportForward()
+					end
+				end)
+
+				Result.Connection = Connection
+
+				if not UserInputService.KeyboardEnabled then
+					VTeleportButton.Visible = true
+
+					Result.ButtonConnection = VTeleportButton.Activated:Connect(function()
+						TeleportForward()
+					end)
+				end
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				if StoredValues.ButtonConnection then
+					StoredValues.ButtonConnection:Disconnect()
+				end
+
+				VTeleportButton.Visible = false
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return VFowardTeleport(Player, Args[1], Args[2])
+		end,
+	},
+	
+	["RightClickTP"] = {
+		Alias = {"rctp", "clicktp", "clickteleport", "rightclickteleport"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Teleports you to where you click when the right mouse button is pressed.",
+
+		Data = {
+			StoredValues = {},
+
+
+			Connect = function(Player)
+
+				local StoredValues = CommandData.RightClickTP.Data.StoredValues
+				local Mouse = Player:GetMouse()
+
+				local function TeleportToPosition(Position)
+					local Character = Player.Character
+					local Root = Character and Character:FindFirstChild("HumanoidRootPart")
+
+					if not Root then
+						return
+					end
+
+					Root.CFrame = CFrame.new(Position + Vector3.new(0, 3, 0))
+				end
+
+				local function TeleportToAim()
+					local Camera = workspace.CurrentCamera
+					if not Camera then
+						return
+					end
+
+					local Center = Camera.ViewportSize / 2
+					local Ray = Camera:ViewportPointToRay(Center.X, Center.Y)
+
+					local Params = RaycastParams.new()
+					Params.FilterType = Enum.RaycastFilterType.Exclude
+					Params.FilterDescendantsInstances = {Player.Character}
+
+					local Hit = workspace:Raycast(
+						Ray.Origin,
+						Ray.Direction * 10000,
+						Params
+					)
+
+					if Hit then
+						TeleportToPosition(Hit.Position)
+					end
+				end
+
+				if UserInputService.TouchEnabled and not UserInputService.GamepadEnabled then
+
+					local Armed = false
+
+					RCTPButton.Visible = true
+
+					StoredValues.ButtonConnection = RCTPButton.Activated:Connect(function()
+						Armed = not Armed
+
+						RCTPButton.BackgroundColor3 = Armed
+							and Color3.fromRGB(50, 150, 100)
+							or Color3.fromRGB(35, 35, 35)
+					end)
+
+					StoredValues.TouchConnection = UserInputService.TouchTapInWorld:Connect(
+						function(Position, ProcessedByUI)
+							if not Armed or ProcessedByUI then
+								return
+							end
+
+							local Camera = workspace.CurrentCamera
+							if not Camera then
+								return
+							end
+
+							local Ray1 = Camera:ViewportPointToRay(Position.X, Position.Y)
+
+							local Params = RaycastParams.new()
+							Params.FilterType = Enum.RaycastFilterType.Exclude
+							Params.FilterDescendantsInstances = {Player.Character}
+
+							local Hit = workspace:Raycast(
+								Ray1.Origin,
+								Ray1.Direction * 10000,
+								Params
+							)
+
+							if Hit then
+								TeleportToPosition(Hit.Position)
+							end
+						end
+					)
+
+				else
+
+					RCTPButton.Visible = false
+
+					StoredValues.InputConnection = UserInputService.InputBegan:Connect(
+						function(Input, GameProcessed)
+
+							if GameProcessed or UserInputService:GetFocusedTextBox() then
+								return
+							end
+
+							if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+								TeleportToPosition(Mouse.Hit.Position)
+
+							elseif Input.KeyCode == Enum.KeyCode.ButtonL2 then
+								TeleportToAim()
+							end
+						end
+					)
+				end
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.ButtonConnection then
+					StoredValues.ButtonConnection:Disconnect()
+				end
+
+				if StoredValues.TouchConnection then
+					StoredValues.TouchConnection:Disconnect()
+				end
+
+				if StoredValues.InputConnection then
+					StoredValues.InputConnection:Disconnect()
+				end
+
+				RCTPButton.Visible = false
+				RCTPButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+
+				table.clear(StoredValues)
+			end,
+
+		},
+
+		Callback = function(Args)
+			return RightClickTP(Player, Args[1])
+		end,
+	},
+
+	["XRay"] = {
+		Alias = {"transparency", "see", "wallhack"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Applies transparency to every object in the workspace.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+				local Result = {}
+
+				local OriginalValues = {}
+
+				local function MakeTransparent(Part)
+
+					if not Part:IsA("BasePart") then
+						return
+					end
+
+					if OriginalValues[Part] ~= nil then
+						return
+					end
+
+					OriginalValues[Part] = Part.Transparency
+					Part.Transparency += 0.4
+				end
+
+				for _, Part in ipairs(workspace:GetDescendants()) do
+					MakeTransparent(Part)
+				end
+
+				local Connection = workspace.DescendantAdded:Connect(
+					MakeTransparent
+				)
+
+				Result.Connection = Connection
+				Result.OriginalValues = OriginalValues
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				for Part, OriginalTransparency in pairs(
+					StoredValues.OriginalValues or {}
+					) do
+
+					if Part.Parent then
+						Part.Transparency = OriginalTransparency
+					end
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return XRay(Args[1])
+		end,
+	},
+	
+	["ESP"] = {
+		Alias = {"highlights", "locations", "markers"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"},
+		},
+
+		Description = "Highlights other players and displays character information.",
+
+		Data = {
+			StoredValues = {},
+
+			RemoveCharacter = function(PlayerData)
+
+				if PlayerData.LabelConnection then
+					PlayerData.LabelConnection:Disconnect()
+					PlayerData.LabelConnection = nil
+				end
+
+				if PlayerData.DescendantConnection then
+					PlayerData.DescendantConnection:Disconnect()
+					PlayerData.DescendantConnection = nil
+				end
+
+				if PlayerData.Character then
+					for _, Descendant in ipairs(PlayerData.Character:GetDescendants()) do
+						if Descendant.Name == "XRayHighlight"
+							or Descendant.Name == "XRayLabel" then
+
+							Descendant:Destroy()
+						end
+					end
+				end
+
+				PlayerData.Character = nil
+			end,
+
+			Connect = function()
+
+				local StoredValues = CommandData.ESP.Data.StoredValues
+				local RemoveCharacter = CommandData.ESP.Data.RemoveCharacter
+
+				StoredValues.Enabled = true
+				StoredValues.Players = {}
+
+				local function UpdateTeamColor(PlayerData)
+
+					local Player = PlayerData.Player
+
+					if not Player then
+						return
+					end
+
+					local Color = Player.TeamColor.Color
+
+					if PlayerData.Character then
+						for _, Descendant in ipairs(PlayerData.Character:GetDescendants()) do
+
+							if Descendant.Name == "XRayHighlight" then
+								Descendant.Color3 = Color
+
+							elseif Descendant:IsA("TextLabel")
+								and Descendant.Parent
+								and Descendant.Parent.Name == "XRayLabel" then
+
+								Descendant.TextColor3 = Color
+							end
+						end
+					end
+				end
+
+				local function HighlightPart(Part, OtherPlayer)
+
+					if not Part:IsA("BasePart") then
+						return
+					end
+
+					if Part:FindFirstChild("XRayHighlight") then
+						return
+					end
+
+					local Highlight = Instance.new("BoxHandleAdornment")
+					Highlight.Name = "XRayHighlight"
+					Highlight.Adornee = Part
+					Highlight.AlwaysOnTop = true
+					Highlight.ZIndex = 1
+					Highlight.Transparency = 0.3
+					Highlight.Color3 = OtherPlayer.TeamColor.Color
+					Highlight.Size = Part.Size
+					Highlight.Parent = Part
+				end
+
+				local function CreateLabel(OtherPlayer, PlayerData, Character)
+
+					task.spawn(function()
+
+						local Head
+						local Humanoid
+
+						while StoredValues.Enabled
+							and PlayerData.Character == Character
+							and OtherPlayer.Character == Character
+							and Character.Parent do
+
+							Head = Character:FindFirstChild("Head")
+							Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+							if Head and Humanoid then
+								break
+							end
+
+							task.wait(0.25)
+						end
+
+						if not StoredValues.Enabled
+							or PlayerData.Character ~= Character
+							or not Head
+							or not Humanoid then
+							return
+						end
+
+						if Head:FindFirstChild("XRayLabel") then
+							return
+						end
+
+						local Billboard = Instance.new("BillboardGui")
+						Billboard.Name = "XRayLabel"
+						Billboard.Size = UDim2.fromOffset(200, 65)
+						Billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+						Billboard.AlwaysOnTop = true
+						Billboard.Parent = Head
+
+						local Text = Instance.new("TextLabel")
+						Text.BackgroundTransparency = 1
+						Text.Size = UDim2.fromScale(1, 1)
+						Text.Font = Enum.Font.Code
+						Text.TextSize = 14
+						Text.TextColor3 = OtherPlayer.TeamColor.Color
+						Text.TextStrokeTransparency = 0.5
+						Text.TextWrapped = true
+						Text.Parent = Billboard
+
+						PlayerData.LabelConnection =
+							RunService.RenderStepped:Connect(function()
+
+								if not StoredValues.Enabled
+									or PlayerData.Character ~= Character
+									or not Character.Parent
+									or not Head.Parent
+									or not Humanoid.Parent then
+									return
+								end
+
+								local Root = Character:FindFirstChild("HumanoidRootPart")
+
+								if not Root then
+									return
+								end
+
+								local Distance = math.floor(
+									(Player.Character.HumanoidRootPart.Position - Root.Position).Magnitude
+								)
+
+								Text.Text = string.format(
+									"%s\nHealth: %.0f / %.0f\nDistance: %d",
+									OtherPlayer.Name,
+									Humanoid.Health,
+									Humanoid.MaxHealth,
+									Distance
+								)
+
+								Text.TextColor3 = OtherPlayer.TeamColor.Color
+							end)
+					end)
+				end
+
+				local function ScanCharacter(OtherPlayer, PlayerData, Character)
+
+					task.spawn(function()
+
+						while StoredValues.Enabled
+							and PlayerData.Character == Character
+							and OtherPlayer.Character == Character
+							and Character.Parent do
+
+							for _, Descendant in ipairs(Character:GetDescendants()) do
+								HighlightPart(Descendant, OtherPlayer)
+							end
+
+							task.wait(1)
+						end
+					end)
+				end
+
+				local function HighlightCharacter(OtherPlayer)
+
+					local PlayerData = StoredValues.Players[OtherPlayer]
+
+					if not PlayerData then
+						return
+					end
+
+					RemoveCharacter(PlayerData)
+
+					local Character = OtherPlayer.Character
+
+					if not Character then
+						return
+					end
+
+					PlayerData.Character = Character
+
+					PlayerData.DescendantConnection =
+						Character.DescendantAdded:Connect(function(Descendant)
+
+							if not StoredValues.Enabled
+								or PlayerData.Character ~= Character then
+								return
+							end
+
+							HighlightPart(Descendant, OtherPlayer)
+
+							if Descendant.Name == "Head"
+								or Descendant:IsA("Humanoid") then
+
+								CreateLabel(OtherPlayer, PlayerData, Character)
+							end
+						end)
+
+					for _, Descendant in ipairs(Character:GetDescendants()) do
+						HighlightPart(Descendant, OtherPlayer)
+					end
+
+					CreateLabel(OtherPlayer, PlayerData, Character)
+					ScanCharacter(OtherPlayer, PlayerData, Character)
+				end
+
+				local function AddPlayer(OtherPlayer)
+
+					if OtherPlayer == Player then
+						return
+					end
+
+					if StoredValues.Players[OtherPlayer] then
+						return
+					end
+
+					local PlayerData = {
+						Player = OtherPlayer,
+						Character = nil,
+					}
+
+					StoredValues.Players[OtherPlayer] = PlayerData
+
+					PlayerData.CharacterAdded =
+						OtherPlayer.CharacterAdded:Connect(function()
+
+							HighlightCharacter(OtherPlayer)
+						end)
+
+					PlayerData.CharacterRemoving =
+						OtherPlayer.CharacterRemoving:Connect(function(Character)
+
+							if PlayerData.Character == Character then
+								RemoveCharacter(PlayerData)
+							end
+						end)
+
+					PlayerData.TeamColorConnection =
+						OtherPlayer:GetPropertyChangedSignal("TeamColor"):Connect(function()
+
+							UpdateTeamColor(PlayerData)
+						end)
+
+					if OtherPlayer.Character then
+						HighlightCharacter(OtherPlayer)
+					end
+				end
+
+				local function RemovePlayer(OtherPlayer)
+
+					local PlayerData = StoredValues.Players[OtherPlayer]
+
+					if not PlayerData then
+						return
+					end
+
+					if PlayerData.CharacterAdded then
+						PlayerData.CharacterAdded:Disconnect()
+					end
+
+					if PlayerData.CharacterRemoving then
+						PlayerData.CharacterRemoving:Disconnect()
+					end
+
+					if PlayerData.TeamColorConnection then
+						PlayerData.TeamColorConnection:Disconnect()
+					end
+
+					RemoveCharacter(PlayerData)
+
+					StoredValues.Players[OtherPlayer] = nil
+				end
+
+				StoredValues.PlayerAdded =
+					Players.PlayerAdded:Connect(AddPlayer)
+
+				StoredValues.PlayerRemoving =
+					Players.PlayerRemoving:Connect(RemovePlayer)
+
+				for _, OtherPlayer in ipairs(Players:GetPlayers()) do
+					AddPlayer(OtherPlayer)
+				end
+			end,
+
+			Disconnect = function()
+
+				local StoredValues = CommandData.ESP.Data.StoredValues
+				local RemoveCharacter = CommandData.ESP.Data.RemoveCharacter
+
+				StoredValues.Enabled = false
+
+				if StoredValues.PlayerAdded then
+					StoredValues.PlayerAdded:Disconnect()
+				end
+
+				if StoredValues.PlayerRemoving then
+					StoredValues.PlayerRemoving:Disconnect()
+				end
+
+				local PlayersToRemove = {}
+
+				for OtherPlayer in pairs(StoredValues.Players or {}) do
+					table.insert(PlayersToRemove, OtherPlayer)
+				end
+
+				for _, OtherPlayer in ipairs(PlayersToRemove) do
+					CommandData.ESP.Data.RemoveCharacter(OtherPlayer)
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+		
+		Callback = function(Args)
+			return ESP(Args[1])
+		end,
+	},
+
+	["Help"] = {
+		Alias = {"cmds", "commands", "h"},
+		CleanupOnDeath = false,
+
+		Args = {
+
+		},
+		Description = "Displays a list of available commands.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function()
+			SendOutput({
+				Type = "Info",
+				Text = "Available commands:"
+			})
+
+			for Name, Command in pairs(CommandData) do
+				if Command.Hidden then continue end
+				local Aliases = table.concat(
+					Command.Alias or {},
+					", "
+				)
+
+				SendOutput({
+					Type = "Info",
+					Text = Name .. (Aliases ~= "" and " (" .. Aliases .. ")" or "")
+				})
+			end
+
+			return {
+				Result = "Success",
+				Message = "Command list displayed."
+			}
+		end,
+	},
+	
+	["Controls"] = {
+		Alias = {"getcontrols", "binds", "keys", "keybinds"},
+		CleanupOnDeath = false,
+
+		Args = {
+
+		},
+		Description = "Displays a list of keybinds.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function()
+
+			local TypeKeys = {}
+
+			if IsPlatformInGroup(Platform, PC) then
+				TypeKeys.Alt = "Alt"
+				TypeKeys.V = "V"
+				TypeKeys.RightClick = "Right Mouse"
+				TypeKeys.WASD = "WASD + Right Mouse"
+				TypeKeys.Tilde = "F6"
+			end
+
+			if IsPlatformInGroup(Platform, Console) then
+				TypeKeys.Alt = "Dpad Up"
+				TypeKeys.V = "L3"
+				TypeKeys.RightClick = "L2"
+				TypeKeys.WASD = "Left and Right Stick"
+				TypeKeys.Tilde = "ButtonX"
+			end
+
+			if IsPlatformInGroup(Platform, Mobile) then
+				TypeKeys.Alt = "Alt Button"
+				TypeKeys.V = "V Button"
+				TypeKeys.RightClick = "RC Toggle Button"
+				TypeKeys.WASD = "Virtual Joystick and Right Touchpad"
+				TypeKeys.Tilde = "Touch (The textbox)"
+			end
+
+			local function GetOutputs(TypeKeys)
+				local List = {
+					"Reopen CommandPrompt: " .. (TypeKeys.Alt or "Unavailable"),
+					"VForwardTeleport: " .. (TypeKeys.V or "Unavailable"),
+					"RightClickTeleport: " .. (TypeKeys.RightClick or "Unavailable"),
+					"Fly Controls: " .. (TypeKeys.WASD or "Unavailable"),
+					"Freecam Controls: " .. (TypeKeys.WASD or "Unavailable"),
+					"Focus Commandprompt: ".. (TypeKeys.Tilde or "Unavailable"),
+				}
+
+				return List
+			end
+
+			local List = GetOutputs(TypeKeys)
+
+			for _, Output in ipairs(List) do
+				SendOutput({
+					Text = Output
+				})
+			end
+			
+			return {
+				Result = "Success",
+				Message = "CommandPrompt controls displayed."
+			}
+
+		end,
+	},
+
+	["ServerHop"] = {
+		Alias = {"hop", "move", "randomserver"},
+		CleanupOnDeath = false,
+
+		Args = {},
+		Description = "Teleports you to a random server. (This can fail if overused).",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+			end,
+
+			Disconnect = function()
+			end,
+		},
+
+		Callback = function()
+			return ServerHop(Player)
+		end,
+	},
+
+	["Clear"] = {
+		Alias = {"cls", "empty"},
+		CleanupOnDeath = false,
+
+		Args = {},
+		Description = "Clears the console.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function() end,
+			Disconnect = function() end,
+		},
+
+		Callback = function()
+			for _, Output in ipairs(FeedScrollingFrame:GetChildren()) do
+				if string.match(Output.Name, "^Message%d+$") or
+					string.match(Output.Name, "^Log%d+$") then
+					Output:Destroy()
+				end
+			end
+
+			return {
+				Result = "Success",
+				Message = "Console cleared."
+			}
+		end,
+	},
+
+	["Freecam"] = {
+		Alias = {"fc", "freecamera"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Amount", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Overrides = {
+			"Orbit",
+			"Fly",
+			"Follow",
+			"View",
+			"SetWalkspeed",
+			"SetJumppower"
+		},
+		Description = "Lets you spectate the game from a free-roaming camera.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(Camera, Amount, Player)
+
+				local Result = {}
+
+				local Character = Player.Character
+				local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+				if not Humanoid then
+					return Result
+				end
+
+				local OriginalWalkSpeed = Humanoid.WalkSpeed
+				local OriginalJumpPower = Humanoid.JumpPower
+				local OriginalJumpHeight = Humanoid.JumpHeight
+				local OriginalAutoRotate = Humanoid.AutoRotate
+
+				local OriginalCameraType = Camera.CameraType
+				local OriginalCameraSubject = Camera.CameraSubject
+				local OriginalCFrame = Camera.CFrame
+
+				local OriginalMouseBehavior = UserInputService.MouseBehavior
+				local OriginalMouseIconEnabled = UserInputService.MouseIconEnabled
+
+				local Position = Camera.CFrame.Position
+				local Look = Camera.CFrame.LookVector
+
+				local Yaw = math.atan2(-Look.X, -Look.Z)
+				local Pitch = math.asin(Look.Y)
+
+				local Keys = {}
+				local MouseDelta = Vector2.zero
+				local GamepadLook = Vector2.zero
+
+				local TouchInput = nil
+				local LastTouchPosition = nil
+
+				Humanoid.WalkSpeed = 0
+				Humanoid.JumpPower = 0
+				Humanoid.JumpHeight = 0
+				Humanoid.AutoRotate = false
+
+				Camera.CameraType = Enum.CameraType.Scriptable
+
+				if UserInputService.KeyboardEnabled then
+					UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+					UserInputService.MouseIconEnabled = false
+				end
+
+				local InputBegan = UserInputService.InputBegan:Connect(function(Input, Processed)
+
+					if Processed then
+						return
+					end
+
+					if Input.UserInputType == Enum.UserInputType.Keyboard then
+						Keys[Input.KeyCode] = true
+					end
+
+					if Input.UserInputType == Enum.UserInputType.Touch then
+
+						local Viewport = Camera.ViewportSize
+
+						if Input.Position.X > Viewport.X / 2 then
+							TouchInput = Input
+							LastTouchPosition = Input.Position
+						end
+					end
+				end)
+
+				local InputEnded = UserInputService.InputEnded:Connect(function(Input)
+
+					if Input.UserInputType == Enum.UserInputType.Keyboard then
+						Keys[Input.KeyCode] = nil
+					end
+
+					if Input == TouchInput then
+						TouchInput = nil
+						LastTouchPosition = nil
+					end
+				end)
+
+				local InputChanged = UserInputService.InputChanged:Connect(function(Input)
+
+					if Input.UserInputType == Enum.UserInputType.MouseMovement then
+						MouseDelta = Input.Delta
+
+					elseif Input.UserInputType == Enum.UserInputType.Touch
+						and Input == TouchInput then
+
+						if LastTouchPosition then
+							local Delta = Input.Position - LastTouchPosition
+
+							MouseDelta += Vector2.new(Delta.X, Delta.Y)
+						end
+
+						LastTouchPosition = Input.Position
+
+					elseif Input.UserInputType == Enum.UserInputType.Gamepad1
+						and Input.KeyCode == Enum.KeyCode.Thumbstick2 then
+
+						GamepadLook = Vector2.new(
+							Input.Position.X,
+							Input.Position.Y
+						)
+					end
+				end)
+
+				local Connection = RunService.RenderStepped:Connect(function(DeltaTime)
+
+					Camera = workspace.CurrentCamera
+
+					if not Camera then
+						return
+					end
+
+					Yaw -= MouseDelta.X * 0.0025
+					Pitch -= MouseDelta.Y * 0.0025
+
+					MouseDelta = Vector2.zero
+
+					local Stick = Vector2.zero
+
+					for _, Input in ipairs(UserInputService:GetGamepadState(Enum.UserInputType.Gamepad1)) do
+						if Input.KeyCode == Enum.KeyCode.Thumbstick2 then
+							Stick = Vector2.new(Input.Position.X, Input.Position.Y)
+							break
+						end
+					end
+
+					if Stick.Magnitude < 0.15 then
+						Stick = Vector2.zero
+					end
+
+					local GamepadSensitivity = 2.5
+
+					Yaw -= Stick.X * GamepadSensitivity * DeltaTime
+					Pitch += Stick.Y * GamepadSensitivity * DeltaTime
+
+					Pitch = math.clamp(
+						Pitch,
+						math.rad(-89),
+						math.rad(89)
+					)
+
+					local Rotation = CFrame.fromOrientation(Pitch, Yaw, 0)
+
+					local MoveDirection = Humanoid.MoveDirection
+
+					local LookVector = Camera.CFrame.LookVector
+					local RightVector = Camera.CFrame.RightVector
+
+					local FlatLook = Vector3.new(LookVector.X, 0, LookVector.Z)
+					local FlatRight = Vector3.new(RightVector.X, 0, RightVector.Z)
+
+					local Move = Vector3.zero
+
+					if FlatLook.Magnitude > 0 then
+						Move += LookVector * MoveDirection:Dot(FlatLook.Unit)
+					end
+
+					if FlatRight.Magnitude > 0 then
+						Move += RightVector * MoveDirection:Dot(FlatRight.Unit)
+					end
+
+					if Move.Magnitude > 0 then
+						Move = Move.Unit
+					end
+
+					local Speed = Amount
+
+					Position += Move * Speed * DeltaTime
+
+					Camera.CameraType = Enum.CameraType.Scriptable
+					Camera.CFrame = CFrame.new(Position) * Rotation
+				end)
+
+				Result.Connection = Connection
+				Result.InputBegan = InputBegan
+				Result.InputEnded = InputEnded
+				Result.InputChanged = InputChanged
+
+				Result.Humanoid = Humanoid
+				Result.OriginalWalkSpeed = OriginalWalkSpeed
+				Result.OriginalJumpPower = OriginalJumpPower
+				Result.OriginalJumpHeight = OriginalJumpHeight
+				Result.OriginalAutoRotate = OriginalAutoRotate
+
+				Result.OriginalCameraType = OriginalCameraType
+				Result.OriginalCameraSubject = OriginalCameraSubject
+				Result.OriginalCFrame = OriginalCFrame
+
+				Result.OriginalMouseBehavior = OriginalMouseBehavior
+				Result.OriginalMouseIconEnabled = OriginalMouseIconEnabled
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				if StoredValues.InputBegan then
+					StoredValues.InputBegan:Disconnect()
+				end
+
+				if StoredValues.InputEnded then
+					StoredValues.InputEnded:Disconnect()
+				end
+
+				if StoredValues.InputChanged then
+					StoredValues.InputChanged:Disconnect()
+				end
+
+				local Humanoid = StoredValues.Humanoid
+
+				if Humanoid and Humanoid.Parent then
+					Humanoid.WalkSpeed = StoredValues.OriginalWalkSpeed
+					Humanoid.JumpPower = StoredValues.OriginalJumpPower
+					Humanoid.JumpHeight = StoredValues.OriginalJumpHeight
+					Humanoid.AutoRotate = StoredValues.OriginalAutoRotate
+				end
+
+				local Camera = workspace.CurrentCamera
+
+				if Camera then
+					Camera.CameraType =
+						StoredValues.OriginalCameraType or Enum.CameraType.Custom
+
+					Camera.CameraSubject = StoredValues.OriginalCameraSubject
+					Camera.CFrame = StoredValues.OriginalCFrame
+				end
+
+				UserInputService.MouseBehavior =
+					StoredValues.OriginalMouseBehavior or Enum.MouseBehavior.Default
+
+				UserInputService.MouseIconEnabled =
+					StoredValues.OriginalMouseIconEnabled ~= false
+
+				table.clear(StoredValues)
+			end,
+
+		},
+
+		Callback = function(Args)
+			return Freecam(Player, Args[1], Args[2])
+		end,
+	},
+
+	["View"] = {
+
+		Alias = {"Watch", "Inspect"},
+		Args = {
+			{Name = "OtherPlayer", Type = "Player"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Views another player's character and outputs their information.",
+
+		Callback = function(Args)
+			return View(Player, Args[1], Args[2])
+		end,
+		
+		Overrides = {
+			"Freecam"
+		},
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(OtherPlayer)
+
+				local Result = {}
+				local Camera = workspace.CurrentCamera
+				local OriginalCameraSubject = Camera.CameraSubject
+
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					local Character = OtherPlayer.Character
+					local Humanoid = Character
+						and Character:FindFirstChildOfClass("Humanoid")
+
+					if Humanoid and Camera.CameraSubject ~= Humanoid then
+						Camera.CameraSubject = Humanoid
+					end
+				end)
+
+				Result.Connection = Connection
+				Result.OriginalCameraSubject = OriginalCameraSubject
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				local Camera = workspace.CurrentCamera
+
+				if Camera and StoredValues.OriginalCameraSubject then
+					Camera.CameraSubject = StoredValues.OriginalCameraSubject
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+	},
+
+	["AntiVoid"] = {
+		Alias = {"antivoid", "novoid"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Creates a part above destroy-height.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(HumanoidRootPart)
+
+				local Result = {}
+
+				local DestroyHeight = workspace.FallenPartsDestroyHeight
+
+				local Part = Instance.new("Part")
+				Part.Name = "AntiVoid"
+				Part.Size = Vector3.new(100000, 10, 100000)
+				Part.Position = Vector3.new(
+					HumanoidRootPart.Position.X,
+					DestroyHeight + 10 + (Part.Size.Y / 2),
+					HumanoidRootPart.Position.Z
+				)
+
+				Part.Anchored = true
+				Part.Transparency = 1
+				Part.CanCollide = true
+				Part.Parent = workspace
+
+				Result.Part = Part
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Part then
+					StoredValues.Part:Destroy()
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return AntiVoid(Player, Args[1])
+		end,
+	},
+
+	["Noclip"] = {
+		Alias = {"clip"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Disables collisions with other parts.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			return Noclip(Player, Args[1])
+		end,
+	},
+	
+	["Orbit"] = {
+		Alias = {"circle", "orb", "round"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Distance", Type = "Number"},
+			{Name = "Player", Type = "Player"},
+			{Name = "Speed", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"},
+		},
+		
+		Overrides = {
+			"Fly",
+			"Follow",
+			"Freecam"
+		},
+		
+		Description = "Orbit a player within the given distance.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function(Distance, TargetPlayer, HumanoidRootPart, Speed)
+
+				local Result = {}
+				local Angle = 0
+
+				local Character = HumanoidRootPart.Parent
+				local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+				if not Humanoid then
+					return
+				end
+				
+				local WasAutoRotate = Humanoid.AutoRotate
+				if Humanoid then
+					Humanoid.AutoRotate = false
+				end
+				local WasAnchored = HumanoidRootPart.Anchored
+				HumanoidRootPart.Anchored = true
+
+				local Connection = RunService.Heartbeat:Connect(function(DeltaTime)
+
+					local TargetCharacter = TargetPlayer.Character
+					if not TargetCharacter then
+						return
+					end
+
+					local TargetHumanoidRootPart = TargetCharacter:FindFirstChild("HumanoidRootPart")
+					if not TargetHumanoidRootPart then
+						return
+					end
+
+					Angle += Speed * DeltaTime
+
+					local Center = TargetHumanoidRootPart.Position
+
+					local X = math.cos(Angle) * Distance
+					local Z = math.sin(Angle) * Distance
+
+					local Position = Center + Vector3.new(X, 0, Z)
+
+					HumanoidRootPart.CFrame = CFrame.lookAt(Position, Center)
+
+				end)
+
+				Result.Connection = Connection
+				Result.WasAnchored = WasAnchored
+				Result.WasAutoRotate = WasAutoRotate
+
+				return Result
+			end,
+			Disconnect = function(StoredValues)
+				
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+				
+				local HumanoidRootPart = StoredValues.HumanoidRootPart
+				local WasAnchored = StoredValues.WasAnchored
+				local WasAutoRotate = StoredValues.WasAutoRotate
+				local Humanoid = StoredValues.Humanoid
+				if HumanoidRootPart and WasAnchored ~= nil then
+					HumanoidRootPart.Anchored = WasAnchored
+				end
+				if Humanoid and WasAutoRotate ~= nil then
+					Humanoid.AutoRotate = WasAutoRotate
+				end
+
+			end,
+		},
+
+		Callback = function(Args)
+			return Orbit(Player, Args[2], Args[3], Args[1], Args[4])
+		end,
+	},
+	
+	["Credits"] = {
+		Alias = {"creds", "cred", "dev", "cmdprompt", "commandprompt", "prompt"},
+		CleanupOnDeath = false,
+
+		Args = {
+			
+		},
+		Description = "Displays command prompt info.",
+
+		Data = {
+			StoredValues = {},
+			Connect = function()
+
+			end,
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+			SendOutput({Text = "Developed by @Roomy91827."})
+			SendOutput({Text = "Link: https://github.com/Roomy91827"})
+			SendOutput({Text = "You can modify the source code under certain conditions."})
+			return {
+				Message = "--CommandPrompt",
+				Result = "Success",
+			}
+		end,
+	},
+
+	["SetWalkspeed"] = {
+		Alias = {"speed", "walkspeed", "setspeed"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Value", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Sets the player's walkspeed to a given value.",
+		
+		Overrides = {
+			"Freecam"
+		},
+
+		Data = {
+			StoredValues = {},
+			Connect = function(Humanoid, Value)
+				local Result = {}
+				local OriginalSpeed = Humanoid.WalkSpeed
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					if Humanoid.Parent then Humanoid.WalkSpeed = Value end
+
+				end)
+				Result.Connection = Connection
+				Result.OriginalSpeed = OriginalSpeed
+				return Result
+			end,
+			Disconnect = function(StoredValues)
+				local Connection = StoredValues.Connection
+				local OriginalSpeed = StoredValues.OriginalSpeed
+				local Humanoid = StoredValues.Humanoid
+
+				if Connection then
+					Connection:Disconnect()
+				end
+
+				if Humanoid and Humanoid.Parent and OriginalSpeed ~= nil then
+					Humanoid.WalkSpeed = OriginalSpeed
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return SetWalkspeed(Player, Args[1], Args[2])
+		end,
+	},
+
+	["Fly"] = {
+		Alias = {"fly", "flight"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Amount", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"},
+		},
+		
+		Overrides = {
+			"Orbit",
+			"Follow",
+			"Freecam"
+		},
+
+		Description = "Allows the player to fly.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(Character, Humanoid, HumanoidRootPart, Amount)
+
+				local Result = {}
+
+				local OriginalAutoRotate = Humanoid.AutoRotate
+				local OriginalPlatformStand = Humanoid.PlatformStand
+
+				local VerticalDirection = 0
+				local Keys = {}
+
+				Humanoid.AutoRotate = false
+				Humanoid.PlatformStand = true
+
+				local InputBegan = UserInputService.InputBegan:Connect(function(Input, Processed)
+
+					if Processed then
+						return
+					end
+
+					if Input.UserInputType == Enum.UserInputType.Keyboard then
+						Keys[Input.KeyCode] = true
+					end
+				end)
+
+				local InputEnded = UserInputService.InputEnded:Connect(function(Input)
+
+					if Input.UserInputType == Enum.UserInputType.Keyboard then
+						Keys[Input.KeyCode] = nil
+					end
+				end)
+
+				local Connection = RunService.Heartbeat:Connect(function(DeltaTime)
+
+					if not Character.Parent or not HumanoidRootPart.Parent then
+						return
+					end
+
+					local Camera = workspace.CurrentCamera
+
+					if not Camera then
+						return
+					end
+
+					local NoclipEnabled =
+						CommandData.Noclip.Data.StoredValues.Enabled == true
+
+					local Direction = Vector3.zero
+
+					local MoveDirection = Humanoid.MoveDirection
+
+					Direction += Vector3.new(
+						MoveDirection.X,
+						0,
+						MoveDirection.Z
+					)
+
+					local Speed = Amount
+
+					if Direction.Magnitude > 0 then
+
+						Direction = Direction.Unit
+
+						local Camera = workspace.CurrentCamera
+						if not Camera then return end
+
+						local NoclipEnabled = CommandData.Noclip.Data.StoredValues.Enabled == true
+
+						local MoveDirection = Humanoid.MoveDirection
+
+						local LookVector = Camera.CFrame.LookVector
+						local RightVector = Camera.CFrame.RightVector
+
+						local FlatLook = Vector3.new(LookVector.X, 0, LookVector.Z)
+						local FlatRight = Vector3.new(RightVector.X, 0, RightVector.Z)
+
+						local Direction = Vector3.zero
+
+						if FlatLook.Magnitude > 0 then
+							Direction += LookVector * MoveDirection:Dot(FlatLook.Unit)
+						end
+
+						if FlatRight.Magnitude > 0 then
+							Direction += RightVector * MoveDirection:Dot(FlatRight.Unit)
+						end
+
+						if Direction.Magnitude > 0 then
+							Direction = Direction.Unit
+
+							local Distance = Direction * Amount * DeltaTime
+
+							local Params = RaycastParams.new()
+							Params.FilterType = Enum.RaycastFilterType.Exclude
+							Params.FilterDescendantsInstances = {Character}
+
+							local RayResult = workspace:Raycast(
+								HumanoidRootPart.Position,
+								Distance,
+								Params
+							)
+
+							if not RayResult or NoclipEnabled then
+								local NewPosition = HumanoidRootPart.Position + Distance
+
+								HumanoidRootPart.CFrame = CFrame.lookAt(
+									NewPosition,
+									NewPosition + Camera.CFrame.LookVector
+								)
+							end
+						end
+					end
+				end)
+
+				Result.Connection = Connection
+				Result.InputBegan = InputBegan
+				Result.InputEnded = InputEnded
+
+				Result.Humanoid = Humanoid
+				Result.HumanoidRootPart = HumanoidRootPart
+
+				Result.OriginalAutoRotate = OriginalAutoRotate
+				Result.OriginalPlatformStand = OriginalPlatformStand
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				if StoredValues.InputBegan then
+					StoredValues.InputBegan:Disconnect()
+				end
+
+				if StoredValues.InputEnded then
+					StoredValues.InputEnded:Disconnect()
+				end
+
+				local Humanoid = StoredValues.Humanoid
+
+				if Humanoid and Humanoid.Parent then
+					Humanoid.AutoRotate = StoredValues.OriginalAutoRotate
+					Humanoid.PlatformStand = StoredValues.OriginalPlatformStand
+				end
+
+				local HumanoidRootPart = StoredValues.HumanoidRootPart
+
+				if HumanoidRootPart and HumanoidRootPart.Parent then
+					HumanoidRootPart.Anchored = false
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return Fly(Player, Args[1], Args[2])
+		end,
+	},
+
+	["JoinGame"] = {
+		Alias = {"place", "joinplace", "game"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "PlaceId", Type = "Number"},
+		},
+		Description = "Joins a game by PlaceId",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+
+
+			end,
+
+			Disconnect = function()
+
+
+			end,
+		},
+
+		Callback = function(Args)
+			return JoinGame(Player, Args[1])
+		end,
+	},
+
+	["SetJumppower"] = {
+		Alias = {"jumppower", "setjumppower", "jump"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Value", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"},
+		},
+		Description = "Sets the player's jumppower to a certain value",
+		Overrides = {
+			"Freecam"
+		},
+		Data = {
+			StoredValues = {},
+			Connect = function(Humanoid, Value)
+				local Result = {}
+				local OriginalJumppower = Humanoid.JumpPower
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					if Humanoid.Parent then Humanoid.JumpPower = Value end
+
+				end)
+				Result.Connection = Connection
+				Result.OriginalJumppower = OriginalJumppower
+				return Result
+			end,
+			Disconnect = function(StoredValues)
+				local Connection = StoredValues.Connection
+				local OriginalJumppower = StoredValues.OriginalJumppower
+				local Humanoid = StoredValues.Humanoid
+
+				if Connection then
+					Connection:Disconnect()
+				end
+
+				if Humanoid and Humanoid.Parent and OriginalJumppower ~= nil then
+					Humanoid.JumpPower = OriginalJumppower
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return SetJumppower(Player, Args[1], Args[2])
+		end,
+	},
+
+	["Follow"] = {
+		Alias = {"pointtowards", "aim", "point"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "OtherPlayer", Type = "Player"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Points the character towards another player. (This can be very buggy if used the wrong way.)",
+		Overrides = {
+			"Orbit",
+			"Fly",
+			"Freecam"
+		},
+		Data = {
+			StoredValues = {},
+
+			Connect = function(HumanoidRootPart, OtherPlayer)
+
+				local Result = {}
+
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					if not HumanoidRootPart.Parent then
+						return
+					end
+
+					local OtherCharacter = OtherPlayer.Character
+					local OtherHumanoidRootPart =
+						OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+
+					if not OtherHumanoidRootPart then
+						return
+					end
+
+					local TargetPosition = OtherHumanoidRootPart.Position
+
+					if TargetPosition.Y < -500 then
+						return
+					end
+
+					HumanoidRootPart.CFrame = CFrame.lookAt(
+						HumanoidRootPart.Position,
+						Vector3.new(
+							TargetPosition.X,
+							HumanoidRootPart.Position.Y,
+							TargetPosition.Z
+						)
+					)
+
+				end)
+
+				Result.Connection = Connection
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				local Connection = StoredValues.Connection
+
+				if Connection then
+					Connection:Disconnect()
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return Follow(Player, Args[1], Args[2])
+		end,
+	},
+
+	["PartWalk"] = {
+		Alias = {"partwalk", "walkpart", "platformwalk", "float"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"},
+			{Name = "Floored", Type = "Boolean"}
+		},
+		Description = "Creates a part that will always be under you.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(HumanoidRootPart, Floored)
+
+				local Result = {}
+
+				local Part = workspace:FindFirstChild("WalkPart")
+
+				if not Part then
+					Part = Instance.new("Part")
+					Part.Name = "WalkPart"
+					Part.Size = Vector3.new(4, 1, 4)
+					Part.Anchored = true
+					Part.Transparency = 1
+					Part.CanCollide = true
+					Part.Parent = workspace
+				end
+
+				local Offset = HumanoidRootPart.Size.Y / 2 + Part.Size.Y / 2 + 2
+				local FixedY = HumanoidRootPart.Position.Y - Offset
+
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					if not HumanoidRootPart.Parent then
+						return
+					end
+
+					local Position = HumanoidRootPart.Position
+
+					if Position.Y < -500 then
+						return
+					end
+
+					local PlatformY
+
+					if Floored then
+						PlatformY = Position.Y - Offset
+					else
+						PlatformY = FixedY
+					end
+
+					Part.CFrame = CFrame.new(
+						Position.X,
+						PlatformY,
+						Position.Z
+					)
+
+				end)
+
+				Result.Connection = Connection
+				Result.Part = Part
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				if StoredValues.Part then
+					StoredValues.Part:Destroy()
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return PartWalk(Player, Args[1], Args[2])
+		end,
+	},
+
+	["SetHipheight"] = {
+		Alias = {"hipheight", "hip", "sethipheight", "height"},
+		CleanupOnDeath = true,
+
+		Args = {
+			{Name = "Value", Type = "Number"},
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Sets your hipheight to the given value.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function(Humanoid, Value)
+				local Result = {}
+
+				local OriginalHipHeight = Humanoid.HipHeight
+
+				local Connection = RunService.Heartbeat:Connect(function()
+					if Humanoid.Parent then
+						Humanoid.HipHeight = Value
+					end
+				end)
+
+				Result.Connection = Connection
+				Result.OriginalHipHeight = OriginalHipHeight
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+				local Connection = StoredValues.Connection
+				local OriginalHipHeight = StoredValues.OriginalHipHeight
+				local Humanoid = StoredValues.Humanoid
+
+				if Connection then
+					Connection:Disconnect()
+				end
+
+				if Humanoid and Humanoid.Parent and OriginalHipHeight ~= nil then
+					Humanoid.HipHeight = OriginalHipHeight
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return HipHeight(Player, Args[1], Args[2])
+		end,
+	},
+
+	["Fullbright"] = {
+		Alias = {"bright", "fb"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Toggle", Type = "Boolean"}
+		},
+		Description = "Lights the entire workspace.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+				local Result = {}
+
+				local OriginalValues = {
+					Brightness = Lighting.Brightness,
+					Ambient = Lighting.Ambient,
+					OutdoorAmbient = Lighting.OutdoorAmbient,
+					ExposureCompensation = Lighting.ExposureCompensation
+				}
+
+				local Connection = RunService.Heartbeat:Connect(function()
+
+					Lighting.Brightness = 3
+					Lighting.Ambient = Color3.fromRGB(180, 180, 180)
+					Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+					Lighting.ExposureCompensation = 1
+
+				end)
+
+				Result.Connection = Connection
+				Result.OriginalValues = OriginalValues
+
+				return Result
+			end,
+
+			Disconnect = function(StoredValues)
+
+				if StoredValues.Connection then
+					StoredValues.Connection:Disconnect()
+				end
+
+				local OriginalValues = StoredValues.OriginalValues
+
+				if OriginalValues then
+					Lighting.Brightness = OriginalValues.Brightness
+					Lighting.Ambient = OriginalValues.Ambient
+					Lighting.OutdoorAmbient = OriginalValues.OutdoorAmbient
+					Lighting.ExposureCompensation =
+						OriginalValues.ExposureCompensation
+				end
+
+				table.clear(StoredValues)
+			end,
+		},
+
+		Callback = function(Args)
+			return Fullbright(Player, Args[1])
+		end,
+	},
+
+	["LoadScript"] = {
+		Alias = {"loadstring", "import"},
+		CleanupOnDeath = false,
+
+		Args = {
+			{Name = "Script", Type = "String"},
+		},
+		Description = "Runs a script from a raw file. (Roblox doesn't like this, so be careful about what you load lmao.)",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+
+
+			end,
+
+			Disconnect = function()
+
+
+			end,
+		},
+
+		Callback = function(Args)
+			return LoadScript(Args[1])
+		end,
+	},
+	
+	["Reload"] = {
+		Alias = {"re", "restart", "update"},
+		CleanupOnDeath = false,
+
+		Args = {},
+
+		Description = "Disconnects everything and reloads CommandPrompt.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+			end,
+
+			Disconnect = function()
+
+			end,
+		},
+
+		Callback = function(Args)
+
+			local Result = {}
+
+			local URL = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/CommandPrompt"
+			
+			if ExecutionType ~= "Executor" then
+				Result.Result = "Failed"
+				Result.Message = "This requires an executor to run."
+				return Result
+			end
+
+			local Success, Source = pcall(function()
+				return game:HttpGet(URL)
+			end)
+
+			if not Success then
+				Result.Result = "Failed"
+				Result.Message = "Failed to download CommandPrompt."
+				return Result
+			end
+
+			local Compiled, ErrorMessage = loadstring(Source)
+
+			if not Compiled then
+				Result.Result = "Failed"
+				Result.Message = "Compilation failed: " .. tostring(ErrorMessage)
+				return Result
+			end
+
+			task.defer(function()
+
+				for CommandName, Command in pairs(CommandData) do
+
+					local Data = Command.Data
+					local StoredValues = Data and Data.StoredValues
+
+					if StoredValues and next(StoredValues) then
+
+						if Data.Disconnect then
+
+							local DisconnectSuccess, DisconnectError = pcall(function()
+								Data.Disconnect(StoredValues)
+							end)
+
+							if not DisconnectSuccess then
+								warn("Failed to disconnect " .. CommandName .. ": " .. tostring(DisconnectError))
+							end
+
+						end
+
+						table.clear(StoredValues)
+
+					end
+
+				end
+				
+				TweenGUIClose()
+				CommandPromptGUI:Destroy()
+
+				local RunSuccess, RunError = pcall(Compiled)
+
+				if not RunSuccess then
+					warn("CommandPrompt reload failed: " .. tostring(RunError))
+				end
+
+			end)
+
+			Result.Result = "Success"
+			Result.Message = "CommandPrompt is restarting..."
+
+			return Result
+		end,
+	},
+	
+	["GetPlayerList"] = {
+		Alias = {"players", "playerlist", "getplayers"},
+		CleanupOnDeath = false,
+
+		Args = {
+		},
+		Description = "Gets a list of players.",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+
+
+
+			end,
+
+			Disconnect = function()
+
+
+			end,
+		},
+
+		Callback = function(Args)
+			return GetPlayerList()
+		end,
+	},
+
+------- Easter Eggs (if u look at this I pronounce u as legally in the state of being a bum.)
+   
+	["Shrek"] = {
+		Alias = {},
+		CleanupOnDeath = false,
+		Hidden = true,
+
+		Args = {},
+		Description = " ",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+			end,
+
+			Disconnect = function()
+			end,
+		},
+
+		Callback = function()
+
+			local Lines = {
+				"       c,_.--.,y",
+				"            7 a.a(",
+				"           (   ,_Y)",
+				"           :  '---;",
+				"       ___.'\\.  - (",
+				"     .'\"\"\"S,._'--'_2..,_",
+				"     |    ':::::=:::::  \\",
+				"     .     f== ;-,---.' T",
+				"      Y.   r,-,_/_      |",
+				"      |:\\___.---' '---./",
+				"      |'`             )",
+				"       \\             ,",
+				"       ':;,.________.;L",
+				"       /  '---------' |",
+				"       |              \\",
+				"       L---'-,--.-'--,-'",
+				"        T    /   \\   Y",
+				"        |   Y    ,   |",
+				"        |   \\    (   |",
+				"        (   )     \\,_L",
+				"        7-./      )  `,",
+				"       /  _(      '._  \\",
+				"      '---'           '--'",
+				"Bet u didn expect that to hapen."
+			}
+
+			for _, Line in ipairs(Lines) do
+				SendOutput({
+					Type = Color3.fromRGB(41, 199, 68),
+					Text = Line
+				})
+			end
+			
+			return {
+				Type = "Success",
+			}
+
+		end,
+	},
+	
+	["Bang"] = {
+		Alias = {""},
+		CleanupOnDeath = false,
+		Hidden = true,
+
+		Args = {},
+		Description = "",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+			end,
+
+			Disconnect = function()
+			end,
+		},
+
+		Callback = function()
+
+			local Lines = {
+				" +--^----------,--------,-----,--------^- ,",
+				" | |||||||||   `--------'     |          O",
+				" `+---------------------------^----------|",
+				"   `\\_,---------,---------,--------------'",
+				"     / XXXXXX /'|       /'",
+				"    / XXXXXX /  `\\    /'",
+				"   / XXXXXX /`-------'",
+				"  / XXXXXX /",
+				" / XXXXXX /",
+				"(________(",
+				" `------'",
+				"Super kewl easter egg."
+			}
+
+			local Color = Color3.fromRGB(255, 202, 79)
+
+			for _, Line in ipairs(Lines) do
+				SendOutput({
+					Type = Color,
+					Text = Line
+				})
+			end
+			
+			return {
+				Type = "Success",
+			}
+
+		end,
+	},
+	
+	["Skid"] = {
+		Alias = {""},
+		CleanupOnDeath = false,
+		Hidden = true,
+
+		Args = {},
+		Description = "",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+			end,
+
+			Disconnect = function()
+			end,
+		},
+
+		Callback = function()
+
+			local Lines = {
+				" Wow",
+				" at",
+				" least",
+				" you",
+				" know",
+				" what",
+				" you",
+				" are.",
+			}
+
+			local Color = Color3.fromRGB(229, 163, 163)
+
+			for _, Line in ipairs(Lines) do
+				SendOutput({
+					Type = Color,
+					Text = Line
+				})
+			end
+			
+			return {
+				Type = "Success",
+			}
+
+		end,
+	},
+	
+	["Dice"] = {
+		Alias = {""},
+		CleanupOnDeath = false,
+		Hidden = true,
+
+		Args = {},
+		Description = "",
+
+		Data = {
+			StoredValues = {},
+
+			Connect = function()
+			end,
+
+			Disconnect = function()
+			end,
+		},
+
+		Callback = function()
+
+			local MaxNumber = 2^53 - 1
+
+			local RandomNumber = (math.random() * 2 - 1) * MaxNumber
+
+			print(RandomNumber)
+			
+			SendOutput({
+				Type = Color3.fromRGB(255, 255, 255),
+				Text = "You rolled "..RandomNumber
+			})
+			
+			return {
+				Type = "Success",
+			}
+			
+		end,
+	},
+	
+	["Hacking"] = { 
+		
+		Alias = {},
+		CleanupOnDeath = false,
+		Hidden = true,
+
+		Args = {},
+		Description = "Toggle Matrix hacking effect",
+
+		Data = {
+			StoredValues = {
+				Active = false,
+			},
+
+			Connect = function()
+				local StoredValues = CommandData.Hacking.Data.StoredValues
+
+				if StoredValues.Active then return end
+				StoredValues.Active = true
+
+				
+				task.spawn(function()
+					local Messages = {
+						"[SYSTEM] Initializing secure connection...",
+						"[NETWORK] Scanning available nodes...",
+						"[ACCESS] Bypassing firewall...",
+						"[ENCRYPTION] Decrypting RSA-4096...",
+						"[SYSTEM] Injecting packets...",
+						"[ACCESS] Root access granted.",
+					  	"[NETWORK] Routing through proxy...",
+						"[DATABASE] Extracting records...",
+						"[SYSTEM] Connection established.",
+						"[SECURITY] Spoofing IP address...",
+						"[ENCRYPTION] Decryption complete.",
+						"[SYSTEM] Running diagnostics...",
+						"[ACCESS] Authentication successful.",
+					}
+
+					local Characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*"
+
+					local function RandomString(Length)
+						local Result = ""
+
+						for i = 1, Length do
+							local Index = math.random(1, #Characters)
+							Result ..= Characters:sub(Index, Index)
+						end
+
+						return Result
+					end
+
+					for _, Message in ipairs(Messages) do
+						if not StoredValues.Active then return end
+
+						SendOutput({
+							Type = Color3.fromRGB(0, 255, 65),
+							Text = Message
+						})
+
+						task.wait(0.3)
+					end
+
+					while StoredValues.Active do
+						SendOutput({
+							Type = Color3.fromRGB(0, 255, 65),
+							Text = RandomString(math.random(35, 75))
+						})
+
+						task.wait()
+					end
+				end)
+			end,
+
+			Disconnect = function()
+				local StoredValues = CommandData.Hacking.Data.StoredValues
+				StoredValues.Active = false
+
+				SendOutput({
+					Type = Color3.fromRGB(255, 60, 60),
+					Text = "[SYSTEM] Hacking simulation terminated."
+				})
+			end,
+		},
+
+		Callback = function()
+			local StoredValues = CommandData.Hacking.Data.StoredValues
+
+			if StoredValues.Active then
+				CommandData.Hacking.Data.Disconnect()
+			else
+				CommandData.Hacking.Data.Connect()
+			end
+			
+			return {
+				Type = "Success",
+			}
+		end,
+	},
+	
+	["Lucky"] = {
+		Alias = {},
+		CleanupOnDeath = false,
+
+		Args = {},
+		Description = "",
+		Hidden = true,
+
+		Data = {
+			StoredValues = {},
+			Connect = function() end,
+			Disconnect = function() end,
+		},
+
+		Callback = function()
+
+			local AvailableCommands = {}
+
+			for Name, Command in pairs(CommandData) do
+
+				if Command.Hidden then
+					continue
+				end
+
+				local Valid = true
+
+				for _, Arg in ipairs(Command.Args) do
+
+					if Arg.Name == "Toggle" then
+
+						local Active = Command.Data.StoredValues.Active
+
+						if Active == nil then
+							Active = false
+						end
+
+						if Active then
+							Command.RandomToggle = false
+						else
+							Command.RandomToggle = true
+						end
+
+					end
+
+				end
+
+				if Valid then
+					table.insert(AvailableCommands, Name)
+				end
+
+			end
+
+			local SelectedName = AvailableCommands[math.random(#AvailableCommands)]
+			local SelectedCommand = CommandData[SelectedName]
+
+			local Arguments = {}
+
+			for _, Arg in ipairs(SelectedCommand.Args) do
+
+				local Value
+
+				if Arg.Type == "String" then
+
+					local StringValues = {
+						OtherPlayer = function()
+							local PlayerList = Players:GetPlayers()
+							return #PlayerList > 0 and PlayerList[math.random(#PlayerList)].Name
+						end,
+
+						Command = function()
+							local Names = {}
+
+							for Name in pairs(CommandData) do
+								table.insert(Names, Name)
+							end
+
+							return Names[math.random(#Names)]
+						end,
+
+						Script = function()
+							return nil
+						end,
+					}
+
+					local Generator = StringValues[Arg.Name]
+
+					if Generator then
+						Value = Generator()
+					else
+						Value = nil
+					end
+
+				elseif Arg.Type == "Number" then
+					Value = tostring(math.random(1, 100))
+
+				elseif Arg.Type == "Boolean" then
+
+					if Arg.Name == "Toggle" then
+						Value = tostring(SelectedCommand.RandomToggle)
+						SelectedCommand.RandomToggle = nil
+					else
+						Value = tostring(math.random(0, 1) == 1)
+					end
+
+				elseif Arg.Type == "Player" then
+					local PlayerList = Players:GetPlayers()
+					Value = PlayerList[math.random(#PlayerList)].Name
+				end
+
+				table.insert(Arguments, Value)
+			end
+
+			local CommandString = SelectedName
+
+			if #Arguments > 0 then
+				CommandString ..= " " .. table.concat(Arguments, " ")
+			end
+
+			ExecuteCommand(CommandString)
+
+			return {
+				Type = Color3.fromRGB(255, 119, 248),
+				Message = "We picked a command and filled it out for ur lazy bum ahh."
+			}
+		end,
+	},
+
+}
+
+SendOutput({
+	Type = "Success",
+	Text = "Command data created..."
+})
+
+local function FindCommand(Parameters)
+
+	local CommandName = string.lower(Parameters.Command)
+
+	for Name, Data in pairs(CommandData) do
+
+		if string.lower(Name) == CommandName then
+			return Data, Name
+		end
+
+		for _, Alias in ipairs(Data.Alias or {}) do
+
+			if string.lower(Alias) == CommandName then
+				return Data, Name
+			end
+
+		end
+	end
+
+	return nil
+end
+
+local function ResolveArgument(Value, ArgType)
+
+	if ArgType == "String" then
+		return Value
+
+	elseif ArgType == "Number" then
+
+		local Number = tonumber(Value)
+
+		if not Number then
+			return nil, "Expected a number."
+		end
+
+		return Number
+
+	elseif ArgType == "Boolean" then
+
+		Value = string.lower(Value)
+
+		if Value == "true" then
+			return true
+
+		elseif Value == "false" then
+			return false
+		end
+
+		return nil, "Expected true or false."
+
+	elseif ArgType == "Player" then
+
+		local SearchValue = string.lower(Value)
+		local PlayersList = Players:GetPlayers()
+
+		for _, OtherPlayer in ipairs(PlayersList) do
+
+			if string.lower(OtherPlayer.Name) == SearchValue then
+				return OtherPlayer
+			end
+
+		end
+
+		local ExactMatches = {}
+
+		for _, OtherPlayer in ipairs(PlayersList) do
+
+			if string.lower(OtherPlayer.DisplayName) == SearchValue then
+				table.insert(ExactMatches, OtherPlayer)
+			end
+
+		end
+
+		if #ExactMatches == 1 then
+			return ExactMatches[1]
+		elseif #ExactMatches > 1 then
+			return nil, "Multiple players have the display name '" .. Value .. "'."
+		end
+
+		local Matches = {}
+
+		for _, OtherPlayer in ipairs(PlayersList) do
+
+			local Username = string.lower(OtherPlayer.Name)
+			local DisplayName = string.lower(OtherPlayer.DisplayName)
+
+			local UsernameMatch =
+				string.sub(Username, 1, #SearchValue) == SearchValue
+
+			local DisplayNameMatch =
+				string.sub(DisplayName, 1, #SearchValue) == SearchValue
+
+			if UsernameMatch or DisplayNameMatch then
+				table.insert(Matches, OtherPlayer)
+			end
+
+		end
+
+		if #Matches == 1 then
+			return Matches[1]
+		elseif #Matches > 1 then
+			return nil, "Multiple players match '" .. Value .. "'. Be more specific."
+		end
+
+		return nil, "Player '" .. Value .. "' not found."
+	end
+
+	return nil, "Unknown argument type: " .. tostring(ArgType)
+end
+
+function ParseInput(Text)
+
+	local Parts = string.split(Text, " ")
+
+	local Parameters = {
+		Command = Parts[1],
+		Args = {},
+	}
+
+	for i = 2, #Parts do
+
+		if Parts[i] ~= "" then
+			table.insert(Parameters.Args, Parts[i])
+		end
+	end
+
+	return Parameters
+end
+
+local function GetOverrides(CommandName)
+
+	local Overrides = {}
+
+	local Command = CommandData[CommandName]
+
+	if not Command then
+		return Overrides
+	end
+
+	for _, Name in ipairs(Command.Overrides or {}) do
+		table.insert(Overrides, Name)
+	end
+
+	for OtherName, OtherCommand in pairs(CommandData) do
+
+		for _, Name in ipairs(OtherCommand.Overrides or {}) do
+
+			if Name == CommandName then
+				table.insert(Overrides, OtherName)
+				break
+			end
+
+		end
+
+	end
+
+	return Overrides
+end
+
+function ExecuteCommand(Text)
+
+	Text = string.gsub(Text, "^%s+", "")
+	Text = string.gsub(Text, "%s+$", "")
+
+	if Text == "" then
+		return
+	end
+
+	Logs += 1
+
+	local LogReference = CommandFrame:Clone()
+	LogReference.Name = "Log" .. Logs
+	LogReference.LayoutOrder = Logs
+	LogReference.Visible = true
+	LogReference.Parent = FeedScrollingFrame
+
+	local LogTextbox = LogReference:FindFirstChild("InputTextbox")
+
+	if LogTextbox then
+		LogTextbox.Text = Text
+		LogTextbox.TextEditable = false
+		LogTextbox.ClearTextOnFocus = false
+	end
+
+	local Parameters = ParseInput(Text)
+
+	local Command, CommandName = FindCommand(Parameters)
+
+	if not Command then
+		SendOutput({
+			Type = "Error",
+			Text = "Unknown command: " .. Parameters.Command
+		})
+
+		return
+	end
+
+	if #Parameters.Args ~= #Command.Args then
+		SendOutput({
+			Type = "Error",
+			Text = "Expected " .. #Command.Args ..
+				" argument(s), got " .. #Parameters.Args .. "."
+		})
+
+		for _, ArgInfo in ipairs(Command.Args) do
+			SendOutput({
+				Type = "Error",
+				Text = ArgInfo.Name .. " - Type: " .. ArgInfo.Type
+			})
+		end
+
+		return
+	end
+
+	local ResolvedArgs = {}
+	local AssignedArgs = {}
+
+	for _, InputArg in ipairs(Parameters.Args) do
+		local ArgName, Value = string.match(InputArg, "^([^=]+)=(.*)$")
+		local SelectedIndex
+
+		if ArgName then
+			for i, ArgInfo in ipairs(Command.Args) do
+				local Name = ArgInfo.Name
+				if Name == ArgName then
+					SelectedIndex = i
+					break
+				end
+			end
+
+			if not SelectedIndex then
+				SendOutput({
+					Type = "Error",
+					Text = "Unknown argument: " .. ArgName
+				})
+				return
+			end
+
+			if AssignedArgs[SelectedIndex] then
+				SendOutput({
+					Type = "Error",
+					Text = "Duplicate argument: " .. ArgName
+				})
+				return
+			end
+
+		else
+			Value = InputArg
+
+			for i = 1, #Command.Args do
+				if not AssignedArgs[i] then
+					SelectedIndex = i
+					break
+				end
+			end
+		end
+
+		if not SelectedIndex then
+			SendOutput({
+				Type = "Error",
+				Text = "Too many arguments."
+			})
+			return
+		end
+
+		local ArgInfo = Command.Args[SelectedIndex]
+
+		local ResolvedValue, ErrorMessage =
+			ResolveArgument(Value, ArgInfo.Type)
+
+		if ResolvedValue == nil then
+			SendOutput({
+				Type = "Error",
+				Text = ArgInfo.Name .. ": "
+					.. (ErrorMessage or "Invalid argument.")
+			})
+			return
+		end
+
+		ResolvedArgs[SelectedIndex] = ResolvedValue
+		AssignedArgs[SelectedIndex] = true
+	end
+
+	for i, ArgInfo in ipairs(Command.Args) do
+		if not AssignedArgs[i] then
+			SendOutput({
+				Type = "Error",
+				Text = "Missing argument: " .. ArgInfo.Name.." - Type: "..ArgInfo.Type
+			})
+			return
+		end
+	end
+	
+	local ShouldEnable = false
+
+	for i, ArgInfo in ipairs(Command.Args) do
+		if ArgInfo.Name == "Toggle" then
+			ShouldEnable = ResolvedArgs[i] == true
+			break
+		end
+	end
+
+	if ShouldEnable then
+
+		local Overrides = GetOverrides(CommandName)
+
+		for _, OverrideName in ipairs(Overrides) do
+
+			local OverrideCommand = CommandData[OverrideName]
+			local StoredValues = OverrideCommand.Data.StoredValues
+			
+			local HasConnection = false
+
+			for _, Value in pairs(StoredValues) do
+				if typeof(Value) == "RBXScriptConnection" then
+					HasConnection = true
+					break
+				end
+			end
+			
+			local Active = StoredValues.Active
+			if Active then
+				HasConnection = true
+			end
+
+			if not HasConnection then
+				continue
+			end
+
+				OverrideCommand.Data.Disconnect(StoredValues)
+
+				table.clear(StoredValues)
+
+				SendOutput({
+					Type = "Error",
+					Text = OverrideName .. " was disabled because " .. CommandName .. " overrides it."
+				})
+
+		end
+
+	end
+
+	local Result = Command.Callback(ResolvedArgs)
+
+	if not Result then
+		return
+	end
+
+	if Result.Message then
+		if Result.Result == "Success" then
+
+			SendOutput({
+				Type = "Success",
+				Text = Result.Message
+			})
+
+		else
+
+			SendOutput({
+				Type = "Error",
+				Text = Result.Message
+			})
+		end
+	end
+
+	if CommandName ~= "RepeatCommand" and CommandName ~= "LoopCommand" then
+		LastCommandInfo.Command = Parameters.Command
+		LastCommandInfo.ArgValues = {}
+
+		for _, Arg in ipairs(Parameters.Args) do
+			table.insert(LastCommandInfo.ArgValues, Arg)
+		end
+	end
+end
+
+SendOutput({
+	Type = "Success",
+	Text = "Defined core functions..."
+})
+
+SendOutput({Text = "CommandPrompt Version: "..CVersion})
+SendOutput({Text = "GameName: "..GameName})
+SendOutput({Text = "PlaceId: "..placeId})
+SendOutput({Text = "Executor: "..CExecutor})
+SendOutput({Text = "Platform: "..Platform})
+
+if (tonumber(LatestVersion) or 0) > tonumber(CVersion) then
+	SendOutput({
+		Type = "Error",
+		Text = "You are using an older version of CommandPrompt.\nIf this is your own modified version, delete this check."
+	})
+
+	SendOutput({
+		Type = "Error",
+		Text = "Latest version: "..LatestVersion
+	})
+
+	SendOutput({
+		Type = "Error",
+		Text = "Current version: "..CVersion
+	})
+
+	SendOutput({
+		Type = "Error",
+		Text = "You can use the update command to restart CommandPrompt to the latest version."
+	})
+end
+
+if IsPlatformInGroup(Platform, Mobile) or IsPlatformInGroup(Platform, Console) then
+	
+	SendOutput({
+		Text = "Builder mode has been enabled, disable it in settings."
+	})
+
+	ToggleDropdownMode()
+
+end
+
+InputTextbox.TextEditable = true
+
+Player.CharacterAdded:Connect(function()
+
+	for _, Command in pairs(CommandData) do
+		local Data = Command.Data
+		local StoredValues = Data.StoredValues
+
+		if Command.CleanupOnDeath then
+			if Data.Disconnect then
+				Data.Disconnect(StoredValues)
+			end
+
+			StoredValues.Active = false
+		end
+	end
+
+end)
+end
