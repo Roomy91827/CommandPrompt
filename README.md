@@ -2,7 +2,7 @@
 
 A Roblox command-line-style GUI with a collection of player, character, camera, and utility commands.
 
-**Current version:** 2.5
+**Current version:** 2.6
 **Author:** Roomy  
 **License:** MIT
 
@@ -25,7 +25,7 @@ A Roblox command-line-style GUI with a collection of player, character, camera, 
 | `CommandPrompt` | Entry-point loader. Downloads and initializes the GUI and client code. |
 | `PowershellGUI` | Creates the CommandPrompt interface and its UI elements. |
 | `Client` | Contains the command framework, command definitions, and behavior. |
-| `Version` | Contains the current release version (`2.5`). |
+| `Version` | Contains the current release version (`2.6`). |
 | `LICENSE` | MIT License. |
 
 ## Installation and execution
@@ -143,7 +143,7 @@ This project does not guarantee that client-side character changes will be accep
 
 ## Version
 
-The current repository version is **2.5**, as recorded in `Version` and the client script.
+The current repository version is **2.6**, as recorded in `Version` and the client script.
 
 ## License
 
