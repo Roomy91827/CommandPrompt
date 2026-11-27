@@ -4055,32 +4055,31 @@ CommandData = {
 
 			Disconnect = function()
 
-				local StoredValues = CommandData.ESP.Data.StoredValues
-				local RemoveCharacter = CommandData.ESP.Data.RemoveCharacter
+    local StoredValues = CommandData.ESP.Data.StoredValues
+    local RemovePlayer = CommandData.ESP.Data.RemovePlayer
 
-				StoredValues.Enabled = false
+    StoredValues.Enabled = false
 
-				if StoredValues.PlayerAdded then
-					StoredValues.PlayerAdded:Disconnect()
-				end
+    if StoredValues.PlayerAdded then
+        StoredValues.PlayerAdded:Disconnect()
+    end
 
-				if StoredValues.PlayerRemoving then
-					StoredValues.PlayerRemoving:Disconnect()
-				end
+    if StoredValues.PlayerRemoving then
+        StoredValues.PlayerRemoving:Disconnect()
+    end
 
-				local PlayersToRemove = {}
+    local PlayersToRemove = {}
 
-				for OtherPlayer in pairs(StoredValues.Players or {}) do
-					table.insert(PlayersToRemove, OtherPlayer)
-				end
+    for OtherPlayer in pairs(StoredValues.Players or {}) do
+        table.insert(PlayersToRemove, OtherPlayer)
+    end
 
-				for _, OtherPlayer in ipairs(PlayersToRemove) do
-					CommandData.ESP.Data.RemoveCharacter(OtherPlayer)
-				end
+    for _, OtherPlayer in ipairs(PlayersToRemove) do
+        RemovePlayer(OtherPlayer)
+    end
 
-				table.clear(StoredValues)
-			end,
-		},
+    table.clear(StoredValues)
+end,
 		
 		Callback = function(Args)
 			return ESP(Args[1])
