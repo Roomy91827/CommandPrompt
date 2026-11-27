@@ -382,9 +382,8 @@ local SCloseButton = TitleFrame:WaitForChild("CloseButton")
 local ReferenceLabel = CommandFrame:WaitForChild("ReferenceLabel")
 
 local placeId = game.PlaceId
---local placeInfo = MarketplaceService:GetProductInfoAsync(placeId)
---local GameName = placeInfo.Name
-local GameName = "IDK"
+local placeInfo = MarketplaceService:GetProductInfoAsync(placeId)
+local GameName = placeInfo.Name
 
 local RawFile = "https://raw.githubusercontent.com/Roomy91827/CommandPrompt/refs/heads/main/CommandPrompt"
 
